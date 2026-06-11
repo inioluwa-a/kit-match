@@ -70,20 +70,38 @@ function PostPage() {
     if (haveSize === needSize) return toast.error("Have and need sizes must differ.");
 
     setSubmitting(true);
-    const { error } = await supabase.from("swap_requests").insert({
-      camp,
-      name: name.trim(),
-      platoon,
-      whatsapp: phone,
-      item,
-      have_size: haveSize,
-      need_size: needSize,
-      status: "available",
-    });
+    // Generate owner token client-side: stored locally so only this poster
+    // can later mark their listing as swapped. The DB never returns it.
+    const ownerToken = crypto.randomUUID();
+    const { data, error } = await supabase
+      .from("swap_requests")
+      .insert({
+        camp,
+        name: name.trim(),
+        platoon,
+        whatsapp: phone,
+        item,
+        have_size: haveSize,
+        need_size: needSize,
+        status: "available",
+        owner_token: ownerToken,
+      })
+      .select("id")
+      .single();
     setSubmitting(false);
     if (error) {
       toast.error("Couldn't post your swap. Try again.");
       return;
+    }
+    if (data?.id) {
+      try {
+        const raw = localStorage.getItem("kitmatch:owner_tokens");
+        const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+        map[data.id] = ownerToken;
+        localStorage.setItem("kitmatch:owner_tokens", JSON.stringify(map));
+      } catch {
+        // ignore storage errors
+      }
     }
     setDone(true);
   }

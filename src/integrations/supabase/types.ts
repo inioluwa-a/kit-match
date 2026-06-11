@@ -24,6 +24,7 @@ export type Database = {
           item: string
           name: string
           need_size: string
+          owner_token: string
           platoon: string
           status: string
           whatsapp: string
@@ -37,6 +38,7 @@ export type Database = {
           item: string
           name: string
           need_size: string
+          owner_token?: string
           platoon: string
           status?: string
           whatsapp: string
@@ -50,6 +52,7 @@ export type Database = {
           item?: string
           name?: string
           need_size?: string
+          owner_token?: string
           platoon?: string
           status?: string
           whatsapp?: string
@@ -61,7 +64,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      mark_swap_swapped: {
+        Args: { p_id: string; p_token: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
