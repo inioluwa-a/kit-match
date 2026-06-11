@@ -91,7 +91,7 @@ function FindPage() {
     queryFn: async (): Promise<SwapRow[]> => {
       const { data, error } = await supabase
         .from("swap_requests")
-        .select("*")
+        .select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at")
         .eq("camp", camp!)
         .eq("status", "available")
         .order("created_at", { ascending: false });
