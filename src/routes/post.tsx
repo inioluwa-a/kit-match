@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Share2, Mail, Sparkles, MessageCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Share2, Mail, Sparkles, MessageCircle, Trash2, MapPinOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -44,6 +45,7 @@ function PostPage() {
   const [item, setItem] = useState<Item | "">("");
   const [haveSize, setHaveSize] = useState("");
   const [needSize, setNeedSize] = useState("");
+  const [isOutsideCamp, setIsOutsideCamp] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [matches, setMatches] = useState<any[]>([]);
@@ -89,6 +91,7 @@ function PostPage() {
         need_size: needSize,
         status: "available",
         owner_token: ownerToken,
+        is_outside_camp: isOutsideCamp,
       })
       .select("id")
       .single();
@@ -236,6 +239,7 @@ function PostPage() {
                 setItem("");
                 setHaveSize("");
                 setNeedSize("");
+                setIsOutsideCamp(false);
                 setMatches([]);
                 setNewListingId(null);
               }}
@@ -327,6 +331,14 @@ function PostPage() {
           </Select>
         </Field>
 
+        <div className="flex items-center justify-between p-4 rounded-xl border bg-secondary/20">
+          <div className="space-y-0.5">
+            <Label htmlFor="outside" className="text-sm font-medium">I'm currently outside camp</Label>
+            <p className="text-xs text-muted-foreground">Check this if you are not physically in {camp} right now.</p>
+          </div>
+          <Switch id="outside" checked={isOutsideCamp} onCheckedChange={setIsOutsideCamp} />
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <Field label="Size I Have">
             <Select value={haveSize} onValueChange={setHaveSize} disabled={!item}>
@@ -361,6 +373,17 @@ function PostPage() {
         <Button type="submit" disabled={submitting} className="h-14 rounded-2xl text-base mt-2">
           {submitting ? <Loader2 className="size-5 animate-spin" /> : "Post Swap Request"}
         </Button>
+
+        <div className="rounded-2xl bg-primary/5 border border-primary/10 p-4 flex gap-3 text-left">
+          <ShieldCheck className="size-5 text-primary shrink-0" />
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold text-primary">Safety First</h4>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Only meet other corps members <strong>physically inside the camp</strong>. KitMatch only facilitates connections; use with caution.
+            </p>
+          </div>
+        </div>
+
         <p className="text-xs text-muted-foreground text-center">
           Listings expire automatically after 14 days.
         </p>
