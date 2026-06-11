@@ -26,6 +26,7 @@ import { useCamp } from "@/lib/camp-store";
 import { ITEMS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
 import { shareApp, GENERIC_SHARE_TEXT, SUPPORT_MAILTO } from "@/lib/share";
+import { NotificationPermissionBanner } from "@/components/notification-permission-banner";
 
 function getOwnerToken(listingId: string): string | null {
   try {
@@ -172,6 +173,8 @@ function FindPage() {
       </header>
 
       <div className="max-w-md mx-auto px-5 py-5 space-y-4">
+        <NotificationPermissionBanner />
+
         <div className="rounded-2xl border bg-card p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
