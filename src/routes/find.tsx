@@ -222,6 +222,7 @@ function FindPage() {
                 key={l.id}
                 listing={l}
                 perfect
+                isOwner={!!getOwnerToken(l.id)}
                 onSwapped={() => markSwapped.mutate(l.id)}
                 swapping={markSwapped.isPending}
               />
@@ -230,6 +231,7 @@ function FindPage() {
               <ListingCard
                 key={l.id}
                 listing={l}
+                isOwner={!!getOwnerToken(l.id)}
                 onSwapped={() => markSwapped.mutate(l.id)}
                 swapping={markSwapped.isPending}
               />
@@ -244,11 +246,13 @@ function FindPage() {
 function ListingCard({
   listing,
   perfect,
+  isOwner,
   onSwapped,
   swapping,
 }: {
   listing: SwapRow;
   perfect?: boolean;
+  isOwner?: boolean;
   onSwapped: () => void;
   swapping: boolean;
 }) {
@@ -285,15 +289,17 @@ function ListingCard({
             <MessageCircle className="size-4" /> Chat on WhatsApp
           </a>
         </Button>
-        <Button
-          variant="secondary"
-          className="h-11 rounded-xl border"
-          onClick={onSwapped}
-          disabled={swapping}
-          title="Mark as swapped"
-        >
-          <CheckCheck className="size-4" />
-        </Button>
+        {isOwner && (
+          <Button
+            variant="secondary"
+            className="h-11 rounded-xl border"
+            onClick={onSwapped}
+            disabled={swapping}
+            title="Mark your listing as swapped"
+          >
+            <CheckCheck className="size-4" />
+          </Button>
+        )}
       </div>
     </article>
   );
