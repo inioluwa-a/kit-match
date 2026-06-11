@@ -8,6 +8,8 @@ import {
   Inbox,
   CheckCheck,
   Loader2,
+  Share2,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,7 @@ import {
 import { useCamp } from "@/lib/camp-store";
 import { ITEMS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
+import { shareApp, GENERIC_SHARE_TEXT, SUPPORT_MAILTO } from "@/lib/share";
 
 function getOwnerToken(listingId: string): string | null {
   try {
@@ -154,10 +157,17 @@ function FindPage() {
           <Link to="/" className="size-9 rounded-lg border grid place-items-center hover:bg-accent">
             <ArrowLeft className="size-4" />
           </Link>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="font-semibold leading-tight">Find Matches</h1>
             <p className="text-xs text-muted-foreground truncate">{camp}</p>
           </div>
+          <button
+            onClick={() => shareApp(GENERIC_SHARE_TEXT)}
+            className="size-9 rounded-lg border grid place-items-center hover:bg-accent"
+            aria-label="Share KitMatch"
+          >
+            <Share2 className="size-4" />
+          </button>
         </div>
       </header>
 
