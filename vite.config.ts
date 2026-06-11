@@ -13,4 +13,7 @@ export default defineConfig({
   // and emits static assets to dist/ (the Netlify publish directory).
   nitro: { preset: "netlify" },
   },
+  // Use the Netlify preset so Nitro compiles the SSR handler as a Netlify Function
+  // and emits static assets to dist/ (the Netlify publish directory).
+  nitro: { preset: "netlify" },
 });
