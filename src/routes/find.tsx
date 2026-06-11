@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   MessageCircle,
@@ -11,6 +11,8 @@ import {
   Share2,
   Mail,
   Trash2,
+  MapPinOff,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -73,6 +75,7 @@ type SwapRow = {
   need_size: string;
   status: string;
   created_at: string;
+  is_outside_camp: boolean;
 };
 
 function FindPage() {
@@ -87,20 +90,36 @@ function FindPage() {
     if (ready && !camp) navigate({ to: "/" });
   }, [ready, camp, navigate]);
 
-  const { data: listings = [], isLoading } = useQuery({
+  const PAGE_SIZE = 10;
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
     queryKey: ["swap_requests", camp],
     enabled: !!camp,
-    queryFn: async (): Promise<SwapRow[]> => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam = 0 }): Promise<SwapRow[]> => {
+      const from = pageParam * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
       const { data, error } = await supabase
         .from("swap_requests")
-        .select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at")
+        .select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at, is_outside_camp")
         .eq("camp", camp!)
         .eq("status", "available")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
       if (error) throw error;
       return data as SwapRow[];
     },
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === PAGE_SIZE ? allPages.length : undefined;
+    },
   });
+
+  const listings = useMemo(() => data?.pages.flat() ?? [], [data]);
 
   const markSwapped = useMutation({
     mutationFn: async ({ id, status = "swapped" }: { id: string; status?: string }) => {
@@ -270,8 +289,33 @@ function FindPage() {
                 swapping={markSwapped.isPending}
               />
             ))}
+
+            {hasNextPage && (
+              <Button
+                variant="outline"
+                className="w-full h-12 rounded-xl mt-4"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "Load More Listings"
+                )}
+              </Button>
+            )}
           </div>
         )}
+
+        <div className="rounded-2xl bg-primary/5 border border-primary/10 p-4 flex gap-3">
+          <ShieldCheck className="size-5 text-primary shrink-0" />
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold text-primary">Safety First</h4>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              For your safety, only meet other corps members <strong>physically inside the camp</strong>. KitMatch only facilitates connections; use with caution.
+            </p>
+          </div>
+        </div>
 
         <div className="mt-8 pt-6 border-t flex items-center justify-center gap-5 text-xs text-muted-foreground">
           <button
@@ -306,7 +350,7 @@ function ListingCard({
   swapping: boolean;
 }) {
   const waUrl = `https://wa.me/${listing.whatsapp}?text=${encodeURIComponent(
-    `Hi ${listing.name}, I saw your KitMatch post for ${listing.item} (you have size ${listing.have_size}, need ${listing.need_size}). Let's swap.`,
+    `Hi ${listing.name}, I saw your KitMatch post for ${listing.item} (you have size ${listing.have_size}, need ${listing.need_size}). Let's swap.` + (listing.is_outside_camp ? " I saw you're currently outside camp." : ""),
   )}`;
   return (
     <article
@@ -316,7 +360,14 @@ function ListingCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-semibold leading-tight">{listing.name}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold leading-tight">{listing.name}</h3>
+            {listing.is_outside_camp && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 text-orange-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-orange-200">
+                <MapPinOff className="size-2.5" /> Outside
+              </span>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground">Platoon {listing.platoon}</p>
         </div>
         {perfect && (
