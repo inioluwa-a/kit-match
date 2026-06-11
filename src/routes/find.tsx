@@ -11,7 +11,6 @@ import {
   Share2,
   Mail,
   Trash2,
-  MapPinOff,
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -75,7 +74,6 @@ type SwapRow = {
   need_size: string;
   status: string;
   created_at: string;
-  is_outside_camp: boolean;
 };
 
 function FindPage() {
@@ -91,13 +89,7 @@ function FindPage() {
   }, [ready, camp, navigate]);
 
   const PAGE_SIZE = 10;
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["swap_requests", camp],
     enabled: !!camp,
     initialPageParam: 0,
@@ -106,7 +98,7 @@ function FindPage() {
       const to = from + PAGE_SIZE - 1;
       const { data, error } = await supabase
         .from("swap_requests")
-        .select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at, is_outside_camp")
+        .select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at")
         .eq("camp", camp!)
         .eq("status", "available")
         .order("created_at", { ascending: false })
@@ -176,9 +168,7 @@ function FindPage() {
         // Someone else's listing is "perfect" if it matches one of MY listings
         return myActiveListings.some(
           (my) =>
-            l.item === my.item &&
-            l.have_size === my.need_size &&
-            l.need_size === my.have_size,
+            l.item === my.item && l.have_size === my.need_size && l.need_size === my.have_size,
         );
       }
     };
@@ -312,7 +302,9 @@ function FindPage() {
           <div className="space-y-1">
             <h4 className="text-sm font-semibold text-primary">Safety First</h4>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              For your safety, only meet other corps members <strong>physically inside the camp</strong>. KitMatch only facilitates connections; use with caution.
+              For your safety, only meet other corps members{" "}
+              <strong>physically inside the camp</strong>. KitMatch only facilitates connections;
+              use with caution.
             </p>
           </div>
         </div>
@@ -350,7 +342,7 @@ function ListingCard({
   swapping: boolean;
 }) {
   const waUrl = `https://wa.me/${listing.whatsapp}?text=${encodeURIComponent(
-    `Hi ${listing.name}, I saw your KitMatch post for ${listing.item} (you have size ${listing.have_size}, need ${listing.need_size}). Let's swap.` + (listing.is_outside_camp ? " I saw you're currently outside camp." : ""),
+    `Hi ${listing.name}, I saw your KitMatch post for ${listing.item} (you have size ${listing.have_size}, need ${listing.need_size}). Let's swap.`,
   )}`;
   return (
     <article
@@ -362,11 +354,6 @@ function ListingCard({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold leading-tight">{listing.name}</h3>
-            {listing.is_outside_camp && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 text-orange-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-orange-200">
-                <MapPinOff className="size-2.5" /> Outside
-              </span>
-            )}
           </div>
           <p className="text-xs text-muted-foreground">Platoon {listing.platoon}</p>
         </div>
@@ -417,21 +404,11 @@ function ListingCard({
   );
 }
 
-function Tag({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "success";
-}) {
+function Tag({ label, value, tone }: { label: string; value: string; tone?: "success" }) {
   return (
     <div
       className={`rounded-xl px-3 py-2 text-sm ${
-        tone === "success"
-          ? "bg-primary/10 text-primary"
-          : "bg-secondary text-secondary-foreground"
+        tone === "success" ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"
       }`}
     >
       <div className="text-[10px] uppercase tracking-wide opacity-70">{label}</div>

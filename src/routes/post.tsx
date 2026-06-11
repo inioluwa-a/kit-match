@@ -1,6 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Share2, Mail, Sparkles, MessageCircle, Trash2, MapPinOff, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  Share2,
+  Mail,
+  Sparkles,
+  MessageCircle,
+  Trash2,
+  ShieldCheck,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +27,16 @@ import { useCamp } from "@/lib/camp-store";
 import { ITEMS, PLATOONS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
 import { shareApp, buildCampShareText, SUPPORT_MAILTO } from "@/lib/share";
+
+type SwapRow = {
+  id: string;
+  name: string;
+  platoon: string;
+  whatsapp: string;
+  item: string;
+  have_size: string;
+  need_size: string;
+};
 
 export const Route = createFileRoute("/post")({
   head: () => ({
@@ -45,10 +65,9 @@ function PostPage() {
   const [item, setItem] = useState<Item | "">("");
   const [haveSize, setHaveSize] = useState("");
   const [needSize, setNeedSize] = useState("");
-  const [isOutsideCamp, setIsOutsideCamp] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
-  const [matches, setMatches] = useState<any[]>([]);
+  const [matches, setMatches] = useState<SwapRow[]>([]);
   const [newListingId, setNewListingId] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
 
@@ -91,7 +110,6 @@ function PostPage() {
         need_size: needSize,
         status: "available",
         owner_token: ownerToken,
-        is_outside_camp: isOutsideCamp,
       })
       .select("id")
       .single();
@@ -155,8 +173,9 @@ function PostPage() {
       toast.success("Listing removed");
       setDone(false);
       setNewListingId(null);
-    } catch (e: any) {
-      toast.error(e.message || "Couldn't remove listing");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Couldn't remove listing";
+      toast.error(message);
     } finally {
       setRemoving(false);
     }
@@ -189,7 +208,9 @@ function PostPage() {
                         <div className="text-xs text-muted-foreground">Platoon {m.platoon}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">Perfect Match</div>
+                        <div className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                          Perfect Match
+                        </div>
                       </div>
                     </div>
                     <div className="mt-3 text-sm flex gap-3">
@@ -239,7 +260,6 @@ function PostPage() {
                 setItem("");
                 setHaveSize("");
                 setNeedSize("");
-                setIsOutsideCamp(false);
                 setMatches([]);
                 setNewListingId(null);
               }}
@@ -331,14 +351,6 @@ function PostPage() {
           </Select>
         </Field>
 
-        <div className="flex items-center justify-between p-4 rounded-xl border bg-secondary/20">
-          <div className="space-y-0.5">
-            <Label htmlFor="outside" className="text-sm font-medium">I'm currently outside camp</Label>
-            <p className="text-xs text-muted-foreground">Check this if you are not physically in {camp} right now.</p>
-          </div>
-          <Switch id="outside" checked={isOutsideCamp} onCheckedChange={setIsOutsideCamp} />
-        </div>
-
         <div className="grid grid-cols-2 gap-3">
           <Field label="Size I Have">
             <Select value={haveSize} onValueChange={setHaveSize} disabled={!item}>
@@ -379,7 +391,8 @@ function PostPage() {
           <div className="space-y-1">
             <h4 className="text-sm font-semibold text-primary">Safety First</h4>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Only meet other corps members <strong>physically inside the camp</strong>. KitMatch only facilitates connections; use with caution.
+              Only meet other corps members <strong>physically inside the camp</strong>. KitMatch
+              only facilitates connections; use with caution.
             </p>
           </div>
         </div>
@@ -388,7 +401,10 @@ function PostPage() {
           Listings expire automatically after 14 days.
         </p>
         <div className="pt-4 flex items-center justify-center gap-5 text-xs text-muted-foreground">
-          <a href={SUPPORT_MAILTO} className="inline-flex items-center gap-1.5 hover:text-foreground">
+          <a
+            href={SUPPORT_MAILTO}
+            className="inline-flex items-center gap-1.5 hover:text-foreground"
+          >
             <Mail className="size-3.5" /> Support
           </a>
         </div>

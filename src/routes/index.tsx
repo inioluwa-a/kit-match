@@ -20,7 +20,8 @@ export const Route = createFileRoute("/")({
       { title: "KitMatch — Swap NYSC kit sizes in your camp" },
       {
         name: "description",
-        content: "Free notice board for NYSC corps members to exchange incorrectly sized kits during orientation camp.",
+        content:
+          "Free notice board for NYSC corps members to exchange incorrectly sized kits during orientation camp.",
       },
       { property: "og:title", content: "KitMatch — Swap NYSC kit sizes" },
       {
@@ -79,12 +80,12 @@ function Index() {
               You'll only see listings from your camp. No accounts needed.
             </p>
           </div>
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Need help?{" "}
-          <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
-            Contact support
-          </a>
-        </p>
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Need help?{" "}
+            <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
+              Contact support
+            </a>
+          </p>
         </div>
       </main>
     );
@@ -141,11 +142,7 @@ function Index() {
               <PlusCircle className="size-5" /> Post a Swap
             </Link>
           </Button>
-          <Button
-            asChild
-            variant="secondary"
-            className="h-14 rounded-2xl text-base border"
-          >
+          <Button asChild variant="secondary" className="h-14 rounded-2xl text-base border">
             <Link to="/find">
               <Search className="size-5" /> Find Matches
             </Link>
@@ -154,15 +151,21 @@ function Index() {
 
         <ol className="mt-8 space-y-3 text-sm text-muted-foreground">
           <li className="flex gap-3">
-            <span className="size-6 shrink-0 rounded-full bg-secondary text-secondary-foreground grid place-items-center text-xs font-semibold">1</span>
+            <span className="size-6 shrink-0 rounded-full bg-secondary text-secondary-foreground grid place-items-center text-xs font-semibold">
+              1
+            </span>
             Post what you have and what size you need.
           </li>
           <li className="flex gap-3">
-            <span className="size-6 shrink-0 rounded-full bg-secondary text-secondary-foreground grid place-items-center text-xs font-semibold">2</span>
+            <span className="size-6 shrink-0 rounded-full bg-secondary text-secondary-foreground grid place-items-center text-xs font-semibold">
+              2
+            </span>
             Browse listings from corps members in your camp.
           </li>
           <li className="flex gap-3">
-            <span className="size-6 shrink-0 rounded-full bg-secondary text-secondary-foreground grid place-items-center text-xs font-semibold">3</span>
+            <span className="size-6 shrink-0 rounded-full bg-secondary text-secondary-foreground grid place-items-center text-xs font-semibold">
+              3
+            </span>
             Chat on WhatsApp and meet up to swap.
           </li>
         </ol>
