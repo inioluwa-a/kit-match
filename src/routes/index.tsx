@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Boxes, MapPin, Search, PlusCircle, Check } from "lucide-react";
+import { Boxes, MapPin, Search, PlusCircle, Check, Share2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { CAMPS } from "@/lib/kit-data";
 import { useCamp, setCamp as persistCamp } from "@/lib/camp-store";
+import { shareApp, GENERIC_SHARE_TEXT, SUPPORT_MAILTO } from "@/lib/share";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -78,6 +79,12 @@ function Index() {
               You'll only see listings from your camp. No accounts needed.
             </p>
           </div>
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Need help?{" "}
+          <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
+            Contact support
+          </a>
+        </p>
         </div>
       </main>
     );
@@ -93,15 +100,24 @@ function Index() {
             </div>
             <span className="font-semibold">KitMatch</span>
           </div>
-          <button
-            onClick={() => {
-              localStorage.removeItem("kitmatch:camp");
-              window.dispatchEvent(new Event("kitmatch:camp-changed"));
-            }}
-            className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-          >
-            <MapPin className="size-3" /> Change camp
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => shareApp(GENERIC_SHARE_TEXT)}
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+              aria-label="Share KitMatch"
+            >
+              <Share2 className="size-3" /> Share
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem("kitmatch:camp");
+                window.dispatchEvent(new Event("kitmatch:camp-changed"));
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              <MapPin className="size-3" /> Change camp
+            </button>
+          </div>
         </div>
       </header>
       <div className="max-w-md mx-auto px-5 py-8">
@@ -150,6 +166,21 @@ function Index() {
             Chat on WhatsApp and meet up to swap.
           </li>
         </ol>
+
+        <div className="mt-10 pt-6 border-t flex items-center justify-center gap-5 text-xs text-muted-foreground">
+          <button
+            onClick={() => shareApp(GENERIC_SHARE_TEXT)}
+            className="inline-flex items-center gap-1.5 hover:text-foreground"
+          >
+            <Share2 className="size-3.5" /> Share KitMatch
+          </button>
+          <a
+            href={SUPPORT_MAILTO}
+            className="inline-flex items-center gap-1.5 hover:text-foreground"
+          >
+            <Mail className="size-3.5" /> Support
+          </a>
+        </div>
       </div>
     </main>
   );
