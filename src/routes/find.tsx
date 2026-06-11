@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState, Fragment } from "react";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   MessageCircle,
@@ -10,6 +10,8 @@ import {
   Loader2,
   Share2,
   Mail,
+  AlertTriangle,
+  Flag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -71,7 +73,10 @@ type SwapRow = {
   need_size: string;
   status: string;
   created_at: string;
+  state_code?: string;
 };
+
+const PAGE_SIZE = 20;
 
 function FindPage() {
   const { camp, ready } = useCamp();
@@ -85,20 +90,33 @@ function FindPage() {
     if (ready && !camp) navigate({ to: "/" });
   }, [ready, camp, navigate]);
 
-  const { data: listings = [], isLoading } = useQuery({
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["swap_requests", camp],
     enabled: !!camp,
-    queryFn: async (): Promise<SwapRow[]> => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam = 0 }): Promise<SwapRow[]> => {
       const { data, error } = await supabase
         .from("swap_requests")
-        .select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at")
+        .select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at, state_code")
         .eq("camp", camp!)
         .eq("status", "available")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(pageParam, pageParam + PAGE_SIZE - 1);
       if (error) throw error;
       return data as SwapRow[];
     },
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined;
+    },
   });
+
+  const listings = useMemo(() => data?.pages.flat() ?? [], [data]);
 
   const markSwapped = useMutation({
     mutationFn: async (id: string) => {
@@ -117,6 +135,18 @@ function FindPage() {
       qc.invalidateQueries({ queryKey: ["swap_requests", camp] });
     },
     onError: (e: Error) => toast.error(e.message || "Couldn't update. Try again."),
+  });
+
+  const reportListing = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("report_listing", { p_id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Listing reported and will be reviewed.");
+      qc.invalidateQueries({ queryKey: ["swap_requests", camp] });
+    },
+    onError: () => toast.error("Couldn't report. Try again."),
   });
 
   const sizeOptions = useMemo(() => {
@@ -172,6 +202,13 @@ function FindPage() {
       </header>
 
       <div className="max-w-md mx-auto px-5 py-5 space-y-4">
+        <div className="flex items-start gap-3 p-3 rounded-2xl bg-amber-50 border border-amber-100 text-[11px] text-amber-900 leading-tight">
+          <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+          <p>
+            <strong>Safety first:</strong> Only meet to swap within camp premises (e.g. Mami market). Avoid isolated areas.
+          </p>
+        </div>
+
         <div className="rounded-2xl border bg-card p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
@@ -234,7 +271,11 @@ function FindPage() {
                 perfect
                 isOwner={!!getOwnerToken(l.id)}
                 onSwapped={() => markSwapped.mutate(l.id)}
-                swapping={markSwapped.isPending}
+                onReport={() => reportListing.mutate(l.id)}
+                swapping={
+                  (markSwapped.isPending && markSwapped.variables === l.id) ||
+                  (reportListing.isPending && reportListing.variables === l.id)
+                }
               />
             ))}
             {others.map((l) => (
@@ -243,9 +284,28 @@ function FindPage() {
                 listing={l}
                 isOwner={!!getOwnerToken(l.id)}
                 onSwapped={() => markSwapped.mutate(l.id)}
-                swapping={markSwapped.isPending}
+                onReport={() => reportListing.mutate(l.id)}
+                swapping={
+                  (markSwapped.isPending && markSwapped.variables === l.id) ||
+                  (reportListing.isPending && reportListing.variables === l.id)
+                }
               />
             ))}
+
+            {hasNextPage && (
+              <Button
+                variant="ghost"
+                className="w-full h-12 rounded-xl text-muted-foreground"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "Load more listings"
+                )}
+              </Button>
+            )}
           </div>
         )}
 
@@ -273,12 +333,14 @@ function ListingCard({
   perfect,
   isOwner,
   onSwapped,
+  onReport,
   swapping,
 }: {
   listing: SwapRow;
   perfect?: boolean;
   isOwner?: boolean;
   onSwapped: () => void;
+  onReport: () => void;
   swapping: boolean;
 }) {
   const waUrl = `https://wa.me/${listing.whatsapp}?text=${encodeURIComponent(
@@ -293,7 +355,15 @@ function ListingCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="font-semibold leading-tight">{listing.name}</h3>
-          <p className="text-xs text-muted-foreground">Platoon {listing.platoon}</p>
+          <div className="flex gap-2 text-xs text-muted-foreground">
+            <span>Platoon {listing.platoon}</span>
+            {listing.state_code && (
+              <>
+                <span>•</span>
+                <span className="font-medium">{listing.state_code}</span>
+              </>
+            )}
+          </div>
         </div>
         {perfect && (
           <span className="inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground px-2.5 py-1 text-xs font-medium">
@@ -314,7 +384,7 @@ function ListingCard({
             <MessageCircle className="size-4" /> Chat on WhatsApp
           </a>
         </Button>
-        {isOwner && (
+        {isOwner ? (
           <Button
             variant="secondary"
             className="h-11 rounded-xl border"
@@ -323,6 +393,20 @@ function ListingCard({
             title="Mark your listing as swapped"
           >
             <CheckCheck className="size-4" />
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            className="h-11 rounded-xl border text-muted-foreground hover:text-destructive"
+            onClick={() => {
+              if (confirm("Report this listing as incorrect or inappropriate?")) {
+                onReport();
+              }
+            }}
+            disabled={swapping}
+            title="Report this listing"
+          >
+            <Flag className="size-4" />
           </Button>
         )}
       </div>

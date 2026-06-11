@@ -39,6 +39,7 @@ function PostPage() {
   const { camp, ready } = useCamp();
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  const [stateCode, setStateCode] = useState("");
   const [platoon, setPlatoon] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [item, setItem] = useState<Item | "">("");
@@ -63,6 +64,7 @@ function PostPage() {
     e.preventDefault();
     if (!camp) return;
     if (!name.trim() || name.length > 50) return toast.error("Enter your name (max 50 chars).");
+    if (!stateCode.trim()) return toast.error("Enter your NYSC State Code.");
     if (!platoon) return toast.error("Select your platoon.");
     const phone = normalizeNigerianPhone(whatsapp);
     if (!phone) return toast.error("Enter a valid Nigerian WhatsApp number.");
@@ -79,6 +81,7 @@ function PostPage() {
       .insert({
         camp,
         name: name.trim(),
+        state_code: stateCode.trim().toUpperCase(),
         platoon,
         whatsapp: phone,
         item,
@@ -136,6 +139,7 @@ function PostPage() {
                 setDone(false);
                 setName("");
                 setPlatoon("");
+                setStateCode("");
                 setWhatsapp("");
                 setItem("");
                 setHaveSize("");
@@ -176,6 +180,16 @@ function PostPage() {
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. David"
             maxLength={50}
+            className="h-12 rounded-xl"
+          />
+        </Field>
+
+        <Field label="NYSC State Code" hint="e.g. LA/23B/1234">
+          <Input
+            value={stateCode}
+            onChange={(e) => setStateCode(e.target.value)}
+            placeholder="XX/XXXX/XXXX"
+            maxLength={15}
             className="h-12 rounded-xl"
           />
         </Field>
@@ -255,9 +269,14 @@ function PostPage() {
         <Button type="submit" disabled={submitting} className="h-14 rounded-2xl text-base mt-2">
           {submitting ? <Loader2 className="size-5 animate-spin" /> : "Post Swap Request"}
         </Button>
-        <p className="text-xs text-muted-foreground text-center">
-          Listings expire automatically after 14 days.
-        </p>
+        <div className="space-y-3">
+          <p className="text-[11px] text-muted-foreground text-center bg-amber-50 border border-amber-100 p-3 rounded-xl">
+            <strong>Safety Warning:</strong> Only meet to swap within the camp premises. Never go to isolated areas.
+          </p>
+          <p className="text-xs text-muted-foreground text-center">
+            Listings expire automatically after 14 days.
+          </p>
+        </div>
         <div className="pt-4 flex items-center justify-center gap-5 text-xs text-muted-foreground">
           <a href={SUPPORT_MAILTO} className="inline-flex items-center gap-1.5 hover:text-foreground">
             <Mail className="size-3.5" /> Support

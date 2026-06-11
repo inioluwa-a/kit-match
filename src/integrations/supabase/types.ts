@@ -19,6 +19,7 @@ export type Database = {
           camp: string
           created_at: string
           expires_at: string
+          flag_count: number
           have_size: string
           id: string
           item: string
@@ -26,6 +27,7 @@ export type Database = {
           need_size: string
           owner_token: string
           platoon: string
+          state_code: string | null
           status: string
           whatsapp: string
         }
@@ -33,6 +35,7 @@ export type Database = {
           camp: string
           created_at?: string
           expires_at?: string
+          flag_count?: number
           have_size: string
           id?: string
           item: string
@@ -40,6 +43,7 @@ export type Database = {
           need_size: string
           owner_token?: string
           platoon: string
+          state_code?: string | null
           status?: string
           whatsapp: string
         }
@@ -47,6 +51,7 @@ export type Database = {
           camp?: string
           created_at?: string
           expires_at?: string
+          flag_count?: number
           have_size?: string
           id?: string
           item?: string
@@ -54,6 +59,7 @@ export type Database = {
           need_size?: string
           owner_token?: string
           platoon?: string
+          state_code?: string | null
           status?: string
           whatsapp?: string
         }
@@ -66,6 +72,10 @@ export type Database = {
     Functions: {
       mark_swap_swapped: {
         Args: { p_id: string; p_token: string }
+        Returns: boolean
+      }
+      report_listing: {
+        Args: { p_id: string }
         Returns: boolean
       }
     }
