@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Share2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
 import { useCamp } from "@/lib/camp-store";
 import { ITEMS, PLATOONS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
+import { shareApp, buildCampShareText, SUPPORT_MAILTO } from "@/lib/share";
 
 export const Route = createFileRoute("/post")({
   head: () => ({
@@ -124,6 +125,13 @@ function PostPage() {
             <Button
               variant="secondary"
               className="h-12 rounded-xl border"
+              onClick={() => shareApp(buildCampShareText(camp))}
+            >
+              <Share2 className="size-4" /> Share with your camp
+            </Button>
+            <Button
+              variant="secondary"
+              className="h-12 rounded-xl border"
               onClick={() => {
                 setDone(false);
                 setName("");
@@ -137,6 +145,12 @@ function PostPage() {
               Post Another Swap
             </Button>
           </div>
+          <p className="mt-8 text-xs text-muted-foreground">
+            Need help?{" "}
+            <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
+              Contact support
+            </a>
+          </p>
         </div>
       </main>
     );
@@ -244,6 +258,11 @@ function PostPage() {
         <p className="text-xs text-muted-foreground text-center">
           Listings expire automatically after 14 days.
         </p>
+        <div className="pt-4 flex items-center justify-center gap-5 text-xs text-muted-foreground">
+          <a href={SUPPORT_MAILTO} className="inline-flex items-center gap-1.5 hover:text-foreground">
+            <Mail className="size-3.5" /> Support
+          </a>
+        </div>
       </form>
     </main>
   );
