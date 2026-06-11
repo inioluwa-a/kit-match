@@ -70,20 +70,36 @@ function PostPage() {
     if (haveSize === needSize) return toast.error("Have and need sizes must differ.");
 
     setSubmitting(true);
-    const { error } = await supabase.from("swap_requests").insert({
-      camp,
-      name: name.trim(),
-      platoon,
-      whatsapp: phone,
-      item,
-      have_size: haveSize,
-      need_size: needSize,
-      status: "available",
-    });
+    const { data, error } = await supabase
+      .from("swap_requests")
+      .insert({
+        camp,
+        name: name.trim(),
+        platoon,
+        whatsapp: phone,
+        item,
+        have_size: haveSize,
+        need_size: needSize,
+        status: "available",
+      })
+      .select("id, owner_token")
+      .single();
     setSubmitting(false);
     if (error) {
       toast.error("Couldn't post your swap. Try again.");
       return;
+    }
+    // Persist owner token locally so this poster (and only this poster)
+    // can later mark their own listing as swapped.
+    if (data?.id && data?.owner_token) {
+      try {
+        const raw = localStorage.getItem("kitmatch:owner_tokens");
+        const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+        map[data.id] = data.owner_token as string;
+        localStorage.setItem("kitmatch:owner_tokens", JSON.stringify(map));
+      } catch {
+        // ignore storage errors
+      }
     }
     setDone(true);
   }
