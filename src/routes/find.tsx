@@ -130,19 +130,39 @@ function FindPage() {
   }, [itemFilter]);
 
   const { perfect, others } = useMemo(() => {
+    const myListingIds = listings.filter((l) => !!getOwnerToken(l.id)).map((l) => l.id);
+    const myActiveListings = listings.filter((l) => myListingIds.includes(l.id));
+
     const filtered = listings.filter((l) => {
       if (itemFilter !== "all" && l.item !== itemFilter) return false;
       if (sizeFilter !== "all" && l.need_size !== sizeFilter) return false;
       return true;
     });
-    const isPerfect = (l: SwapRow) =>
-      listings.some(
-        (o) =>
-          o.id !== l.id &&
-          o.item === l.item &&
-          o.have_size === l.need_size &&
-          o.need_size === l.have_size,
-      );
+
+    const isPerfect = (l: SwapRow) => {
+      if (myActiveListings.length === 0) return false;
+
+      const isMine = !!getOwnerToken(l.id);
+      if (isMine) {
+        // My listing is "perfect" if there's at least one OTHER person's listing that matches it
+        return listings.some(
+          (o) =>
+            !getOwnerToken(o.id) &&
+            o.item === l.item &&
+            o.have_size === l.need_size &&
+            o.need_size === l.have_size,
+        );
+      } else {
+        // Someone else's listing is "perfect" if it matches one of MY listings
+        return myActiveListings.some(
+          (my) =>
+            l.item === my.item &&
+            l.have_size === my.need_size &&
+            l.need_size === my.have_size,
+        );
+      }
+    };
+
     const perfect: SwapRow[] = [];
     const others: SwapRow[] = [];
     for (const l of filtered) (isPerfect(l) ? perfect : others).push(l);
