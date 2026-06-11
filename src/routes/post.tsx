@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Share2, Mail, Sparkles, MessageCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Share2, Mail, Sparkles, MessageCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,8 @@ function PostPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [matches, setMatches] = useState<any[]>([]);
+  const [newListingId, setNewListingId] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   useEffect(() => {
     if (ready && !camp) navigate({ to: "/" });
@@ -113,6 +115,7 @@ function PostPage() {
       return;
     }
     if (data?.id) {
+      setNewListingId(data.id);
       try {
         const raw = localStorage.getItem("kitmatch:owner_tokens");
         const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};
@@ -123,6 +126,37 @@ function PostPage() {
       }
     }
     setDone(true);
+  }
+
+  async function handleRemove() {
+    if (!newListingId) return;
+    setRemoving(true);
+    try {
+      const raw = localStorage.getItem("kitmatch:owner_tokens");
+      if (!raw) throw new Error("No token found");
+      const map = JSON.parse(raw) as Record<string, string>;
+      const token = map[newListingId];
+      if (!token) throw new Error("No token found for this listing");
+
+      const { data, error } = await supabase.rpc("mark_swap_swapped", {
+        p_id: newListingId,
+        p_token: token,
+      });
+
+      if (error) throw error;
+      if (!data) throw new Error("Could not remove listing");
+
+      delete map[newListingId];
+      localStorage.setItem("kitmatch:owner_tokens", JSON.stringify(map));
+
+      toast.success("Listing removed");
+      setDone(false);
+      setNewListingId(null);
+    } catch (e: any) {
+      toast.error(e.message || "Couldn't remove listing");
+    } finally {
+      setRemoving(false);
+    }
   }
 
   if (!ready || !camp) return null;
@@ -203,9 +237,18 @@ function PostPage() {
                 setHaveSize("");
                 setNeedSize("");
                 setMatches([]);
+                setNewListingId(null);
               }}
             >
               Post Another Swap
+            </Button>
+            <Button
+              variant="ghost"
+              className="h-12 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+              onClick={handleRemove}
+              disabled={removing}
+            >
+              <Trash2 className="size-4" /> Remove My Listing
             </Button>
           </div>
           <p className="mt-8 text-xs text-muted-foreground">

@@ -10,6 +10,7 @@ import {
   Loader2,
   Share2,
   Mail,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -102,19 +103,19 @@ function FindPage() {
   });
 
   const markSwapped = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, status = "swapped" }: { id: string; status?: string }) => {
       const token = getOwnerToken(id);
-      if (!token) throw new Error("Only the original poster can mark this listing as swapped.");
+      if (!token) throw new Error("Only the original poster can manage this listing.");
       const { data, error } = await supabase.rpc("mark_swap_swapped", {
         p_id: id,
         p_token: token,
       });
       if (error) throw error;
-      if (!data) throw new Error("Could not mark as swapped.");
+      if (!data) throw new Error("Could not update listing.");
       clearOwnerToken(id);
     },
-    onSuccess: () => {
-      toast.success("Marked as swapped");
+    onSuccess: (_, variables) => {
+      toast.success(variables.status === "swapped" ? "Marked as swapped" : "Listing removed");
       qc.invalidateQueries({ queryKey: ["swap_requests", camp] });
     },
     onError: (e: Error) => toast.error(e.message || "Couldn't update. Try again."),
@@ -256,7 +257,7 @@ function FindPage() {
                 listing={l}
                 perfect
                 isOwner={!!getOwnerToken(l.id)}
-                onSwapped={() => markSwapped.mutate(l.id)}
+                onSwapped={(status) => markSwapped.mutate({ id: l.id, status })}
                 swapping={markSwapped.isPending}
               />
             ))}
@@ -265,7 +266,7 @@ function FindPage() {
                 key={l.id}
                 listing={l}
                 isOwner={!!getOwnerToken(l.id)}
-                onSwapped={() => markSwapped.mutate(l.id)}
+                onSwapped={(status) => markSwapped.mutate({ id: l.id, status })}
                 swapping={markSwapped.isPending}
               />
             ))}
@@ -301,7 +302,7 @@ function ListingCard({
   listing: SwapRow;
   perfect?: boolean;
   isOwner?: boolean;
-  onSwapped: () => void;
+  onSwapped: (status?: string) => void;
   swapping: boolean;
 }) {
   const waUrl = `https://wa.me/${listing.whatsapp}?text=${encodeURIComponent(
@@ -331,21 +332,33 @@ function ListingCard({
           <Tag label="Needs" value={`Size ${listing.need_size}`} />
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-        <Button asChild className="h-11 rounded-xl">
-          <a href={waUrl} target="_blank" rel="noopener noreferrer">
-            <MessageCircle className="size-4" /> Chat on WhatsApp
-          </a>
-        </Button>
+      <div className="mt-4 space-y-2">
+        <div className={`grid gap-2 ${isOwner ? "grid-cols-[1fr_auto]" : "grid-cols-1"}`}>
+          <Button asChild className="h-11 rounded-xl">
+            <a href={waUrl} target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="size-4" /> Chat on WhatsApp
+            </a>
+          </Button>
+          {isOwner && (
+            <Button
+              variant="secondary"
+              className="h-11 rounded-xl border"
+              onClick={() => onSwapped("swapped")}
+              disabled={swapping}
+              title="Mark as swapped"
+            >
+              <CheckCheck className="size-4" />
+            </Button>
+          )}
+        </div>
         {isOwner && (
           <Button
-            variant="secondary"
-            className="h-11 rounded-xl border"
-            onClick={onSwapped}
+            variant="ghost"
+            className="w-full h-10 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+            onClick={() => onSwapped("removed")}
             disabled={swapping}
-            title="Mark your listing as swapped"
           >
-            <CheckCheck className="size-4" />
+            <Trash2 className="size-4" /> Remove Listing
           </Button>
         )}
       </div>
