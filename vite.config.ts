@@ -8,9 +8,9 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
+   // Use the Netlify preset so Nitro compiles the SSR handler as a Netlify Function
+  // and emits static assets to dist/ (the Netlify publish directory).
+  nitro: { preset: "netlify" },
   },
   // Use the Netlify preset so Nitro compiles the SSR handler as a Netlify Function
   // and emits static assets to dist/ (the Netlify publish directory).
