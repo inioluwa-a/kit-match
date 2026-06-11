@@ -248,6 +248,21 @@ function FindPage() {
             ))}
           </div>
         )}
+
+        <div className="mt-8 pt-6 border-t flex items-center justify-center gap-5 text-xs text-muted-foreground">
+          <button
+            onClick={() => shareApp(GENERIC_SHARE_TEXT)}
+            className="inline-flex items-center gap-1.5 hover:text-foreground"
+          >
+            <Share2 className="size-3.5" /> Share KitMatch
+          </button>
+          <a
+            href={SUPPORT_MAILTO}
+            className="inline-flex items-center gap-1.5 hover:text-foreground"
+          >
+            <Mail className="size-3.5" /> Support
+          </a>
+        </div>
       </div>
     </main>
   );
