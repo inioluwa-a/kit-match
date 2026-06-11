@@ -80,17 +80,37 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "KitMatch | NYSC Kit Swap" },
-      { name: "description", content: "Wrong NYSC kit size? Find matching corps members in your camp and swap through WhatsApp. No sign up required." },
+      {
+        name: "description",
+        content:
+          "Wrong NYSC kit size? Find matching corps members in your camp and swap through WhatsApp. No sign up required.",
+      },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "KitMatch | NYSC Kit Swap" },
-      { property: "og:description", content: "Wrong NYSC kit size? Find matching corps members in your camp and swap through WhatsApp. No sign up required." },
+      {
+        property: "og:description",
+        content:
+          "Wrong NYSC kit size? Find matching corps members in your camp and swap through WhatsApp. No sign up required.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "KitMatch | NYSC Kit Swap" },
-      { name: "twitter:description", content: "Wrong NYSC kit size? Find matching corps members in your camp and swap through WhatsApp. No sign up required." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/O9QchBxxRAMvFti9DxNpOSg8yBD2/social-images/social-1781179081991-KitMatch.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/O9QchBxxRAMvFti9DxNpOSg8yBD2/social-images/social-1781179081991-KitMatch.webp" },
+      {
+        name: "twitter:description",
+        content:
+          "Wrong NYSC kit size? Find matching corps members in your camp and swap through WhatsApp. No sign up required.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/O9QchBxxRAMvFti9DxNpOSg8yBD2/social-images/social-1781179081991-KitMatch.webp",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/O9QchBxxRAMvFti9DxNpOSg8yBD2/social-images/social-1781179081991-KitMatch.webp",
+      },
     ],
     links: [
       {

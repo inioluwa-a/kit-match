@@ -45,7 +45,7 @@ export function useMatchNotifications() {
             (my) =>
               my.item === newListing.item &&
               my.have_size === newListing.need_size &&
-              my.need_size === newListing.have_size
+              my.need_size === newListing.have_size,
           );
 
           if (isMatch) {
@@ -63,7 +63,7 @@ export function useMatchNotifications() {
               duration: 10000,
             });
           }
-        }
+        },
       )
       .subscribe();
 

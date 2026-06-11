@@ -41,16 +41,14 @@ export function NotificationPermissionBanner() {
         <Bell className="size-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-semibold leading-tight text-primary">Get notified of matches</h3>
+        <h3 className="text-sm font-semibold leading-tight text-primary">
+          Get notified of matches
+        </h3>
         <p className="text-xs text-muted-foreground mt-0.5">
           We'll alert you the moment a perfect match is posted while this tab is open.
         </p>
       </div>
-      <Button
-        onClick={requestPermission}
-        size="sm"
-        className="rounded-xl h-9 px-4 shrink-0"
-      >
+      <Button onClick={requestPermission} size="sm" className="rounded-xl h-9 px-4 shrink-0">
         Enable
       </Button>
     </div>
