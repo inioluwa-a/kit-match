@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      swap_requests: {
+        Row: {
+          camp: string
+          created_at: string
+          expires_at: string
+          have_size: string
+          id: string
+          item: string
+          name: string
+          need_size: string
+          platoon: string
+          status: string
+          whatsapp: string
+        }
+        Insert: {
+          camp: string
+          created_at?: string
+          expires_at?: string
+          have_size: string
+          id?: string
+          item: string
+          name: string
+          need_size: string
+          platoon: string
+          status?: string
+          whatsapp: string
+        }
+        Update: {
+          camp?: string
+          created_at?: string
+          expires_at?: string
+          have_size?: string
+          id?: string
+          item?: string
+          name?: string
+          need_size?: string
+          platoon?: string
+          status?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
