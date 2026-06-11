@@ -24,6 +24,29 @@ import { useCamp } from "@/lib/camp-store";
 import { ITEMS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
 
+function getOwnerToken(listingId: string): string | null {
+  try {
+    const raw = localStorage.getItem("kitmatch:owner_tokens");
+    if (!raw) return null;
+    const map = JSON.parse(raw) as Record<string, string>;
+    return map[listingId] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function clearOwnerToken(listingId: string) {
+  try {
+    const raw = localStorage.getItem("kitmatch:owner_tokens");
+    if (!raw) return;
+    const map = JSON.parse(raw) as Record<string, string>;
+    delete map[listingId];
+    localStorage.setItem("kitmatch:owner_tokens", JSON.stringify(map));
+  } catch {
+    // ignore
+  }
+}
+
 export const Route = createFileRoute("/find")({
   head: () => ({
     meta: [
@@ -76,17 +99,21 @@ function FindPage() {
 
   const markSwapped = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("swap_requests")
-        .update({ status: "swapped" })
-        .eq("id", id);
+      const token = getOwnerToken(id);
+      if (!token) throw new Error("Only the original poster can mark this listing as swapped.");
+      const { data, error } = await supabase.rpc("mark_swap_swapped", {
+        p_id: id,
+        p_token: token,
+      });
       if (error) throw error;
+      if (!data) throw new Error("Could not mark as swapped.");
+      clearOwnerToken(id);
     },
     onSuccess: () => {
       toast.success("Marked as swapped");
       qc.invalidateQueries({ queryKey: ["swap_requests", camp] });
     },
-    onError: () => toast.error("Couldn't update. Try again."),
+    onError: (e: Error) => toast.error(e.message || "Couldn't update. Try again."),
   });
 
   const sizeOptions = useMemo(() => {
