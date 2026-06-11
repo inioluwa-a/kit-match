@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Share2, Mail } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Share2, Mail, Sparkles, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,7 @@ function PostPage() {
   const [needSize, setNeedSize] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [matches, setMatches] = useState<any[]>([]);
 
   useEffect(() => {
     if (ready && !camp) navigate({ to: "/" });
@@ -89,6 +90,23 @@ function PostPage() {
       })
       .select("id")
       .single();
+
+    if (!error) {
+      // Find immediate matches
+      const { data: matchData } = await supabase
+        .from("swap_requests")
+        .select("id, name, platoon, whatsapp, item, have_size, need_size")
+        .eq("camp", camp)
+        .eq("item", item)
+        .eq("have_size", needSize)
+        .eq("need_size", haveSize)
+        .eq("status", "available")
+        .neq("id", data?.id)
+        .limit(3);
+
+      if (matchData) setMatches(matchData);
+    }
+
     setSubmitting(false);
     if (error) {
       toast.error("Couldn't post your swap. Try again.");
@@ -111,16 +129,60 @@ function PostPage() {
 
   if (done) {
     return (
-      <main className="min-h-screen bg-background flex items-center justify-center px-5">
-        <div className="w-full max-w-md text-center">
+      <main className="min-h-screen bg-background py-12 px-5">
+        <div className="w-full max-w-md mx-auto text-center">
           <div className="size-16 rounded-full bg-primary/10 text-primary grid place-items-center mx-auto mb-4">
             <CheckCircle2 className="size-8" />
           </div>
           <h1 className="text-2xl font-bold">Your swap request has been posted</h1>
           <p className="mt-2 text-muted-foreground">Corps members in {camp} can now find you.</p>
-          <div className="mt-6 grid gap-3">
+
+          {matches.length > 0 && (
+            <div className="mt-8 text-left space-y-4">
+              <div className="flex items-center gap-2 text-primary">
+                <Sparkles className="size-5 fill-primary/20" />
+                <h2 className="font-bold text-lg">Instant Match Found!</h2>
+              </div>
+              <div className="grid gap-3">
+                {matches.map((m) => (
+                  <div key={m.id} className="p-4 rounded-2xl border bg-card shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-semibold">{m.name}</div>
+                        <div className="text-xs text-muted-foreground">Platoon {m.platoon}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">Perfect Match</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-sm flex gap-3">
+                      <div className="flex-1 p-2 rounded-xl bg-secondary/50">
+                        <div className="text-[10px] uppercase opacity-70">Has</div>
+                        <div className="font-semibold">Size {m.have_size}</div>
+                      </div>
+                      <div className="flex-1 p-2 rounded-xl bg-secondary/50">
+                        <div className="text-[10px] uppercase opacity-70">Needs</div>
+                        <div className="font-semibold">Size {m.need_size}</div>
+                      </div>
+                    </div>
+                    <Button asChild className="w-full mt-3 h-10 rounded-xl gap-2">
+                      <a
+                        href={`https://wa.me/${m.whatsapp}?text=${encodeURIComponent(`Hi ${m.name}, I just saw your KitMatch post for ${m.item}! I have size ${m.have_size} and need size ${m.need_size}. Let's swap!`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <MessageCircle className="size-4" /> Chat on WhatsApp
+                      </a>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-8 grid gap-3">
             <Button asChild className="h-12 rounded-xl">
-              <Link to="/find">Find Matches</Link>
+              <Link to="/find">View All Listings</Link>
             </Button>
             <Button
               variant="secondary"
@@ -140,6 +202,7 @@ function PostPage() {
                 setItem("");
                 setHaveSize("");
                 setNeedSize("");
+                setMatches([]);
               }}
             >
               Post Another Swap
