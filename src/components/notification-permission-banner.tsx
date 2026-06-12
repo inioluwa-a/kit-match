@@ -48,7 +48,8 @@ export function NotificationPermissionBanner() {
     permission === "granted" ||
     dismissed ||
     !("Notification" in window)
-  ) return null;
+  )
+    return null;
 
   return (
     <div className="rounded-2xl border bg-primary/5 border-primary/20 p-4 flex items-center gap-4 relative group">
@@ -64,9 +65,7 @@ export function NotificationPermissionBanner() {
         <Bell className="size-5" />
       </div>
       <div className="flex-1 min-w-0 pr-4">
-        <h3 className="text-sm font-semibold leading-tight text-primary">
-          Match Alerts
-        </h3>
+        <h3 className="text-sm font-semibold leading-tight text-primary">Match Alerts</h3>
         <p className="text-xs text-muted-foreground mt-0.5">
           Get notified when a perfect match is posted.
         </p>

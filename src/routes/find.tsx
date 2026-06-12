@@ -37,7 +37,7 @@ import {
 import { useCamp } from "@/lib/camp-store";
 import { ITEMS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
-import { shareApp, GENERIC_SHARE_TEXT, FEEDBACK_MAILTO, shareToWhatsApp } from "@/lib/share";
+import { shareApp, GENERIC_SHARE_TEXT, shareToWhatsApp } from "@/lib/share";
 import { NotificationPermissionBanner } from "@/components/notification-permission-banner";
 import { Footer } from "@/components/footer";
 
@@ -100,7 +100,12 @@ type SwapRow = {
 function FindPage() {
   const { camp: storedCamp, ready, setCamp } = useCamp();
   const navigate = useNavigate();
-  const { item: itemFilter, size: sizeFilter, perfect: perfectOnly, camp: urlCamp } = Route.useSearch();
+  const {
+    item: itemFilter,
+    size: sizeFilter,
+    perfect: perfectOnly,
+    camp: urlCamp,
+  } = Route.useSearch();
   const qc = useQueryClient();
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -135,7 +140,10 @@ function FindPage() {
 
       let query = supabase
         .from("swap_requests")
-        .select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at", { count: "exact" })
+        .select(
+          "id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at",
+          { count: "exact" },
+        )
         .eq("camp", camp!)
         .eq("status", "available");
 
@@ -264,7 +272,9 @@ function FindPage() {
         <div className="rounded-2xl border bg-card p-4 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Which kit item?</Label>
+              <Label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                Which kit item?
+              </Label>
               <Select
                 value={itemFilter || "all"}
                 onValueChange={(val) => updateFilters({ item: val, size: "all" })}
@@ -283,7 +293,9 @@ function FindPage() {
               </Select>
             </div>
             <div className="grid gap-1.5">
-              <Label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Size you need?</Label>
+              <Label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                Size you need?
+              </Label>
               <Select
                 value={sizeFilter || "all"}
                 onValueChange={(val) => updateFilters({ size: val })}
@@ -381,24 +393,12 @@ function FindPage() {
         <div className="rounded-2xl bg-primary/5 border border-primary/10 p-4 flex gap-3 items-center">
           <ShieldCheck className="size-5 text-primary shrink-0" />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            <strong>Safety:</strong> Only meet other corps members <strong>inside the camp</strong>. Use with caution.
+            <strong>Safety:</strong> Only meet other corps members <strong>inside the camp</strong>.
+            Use with caution.
           </p>
         </div>
 
-        <div className="mt-8 pt-6 border-t flex items-center justify-center gap-5 text-xs text-muted-foreground">
-          <button
-            onClick={() => shareApp(GENERIC_SHARE_TEXT, "KitMatch", camp)}
-            className="inline-flex items-center gap-1.5 hover:text-foreground"
-          >
-            <Share2 className="size-3.5" /> Share KitMatch
-          </button>
-          <a
-            href={FEEDBACK_MAILTO}
-            className="inline-flex items-center gap-1.5 hover:text-foreground"
-          >
-            <Mail className="size-3.5" /> Feedback
-          </a>
-        </div>
+        <Footer />
       </div>
 
       {showScrollTop && (
@@ -446,7 +446,11 @@ function ListingCard({
       });
 
       const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], `kitmatch-${listing.item.replace(/\s+/g, "-").toLowerCase()}.png`, { type: "image/png" });
+      const file = new File(
+        [blob],
+        `kitmatch-${listing.item.replace(/\s+/g, "-").toLowerCase()}.png`,
+        { type: "image/png" },
+      );
 
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
@@ -516,10 +520,21 @@ function ListingCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 rounded-xl">
               <DropdownMenuItem onClick={handleShareAsImage} disabled={isSharing}>
-                {isSharing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <ImageIcon className="size-4 mr-2" />}
+                {isSharing ? (
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                ) : (
+                  <ImageIcon className="size-4 mr-2" />
+                )}
                 Share as Image
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => shareToWhatsApp(`Hi, check out this ${listing.item} swap on KitMatch!`, listing.camp)}>
+              <DropdownMenuItem
+                onClick={() =>
+                  shareToWhatsApp(
+                    `Hi, check out this ${listing.item} swap on KitMatch!`,
+                    listing.camp,
+                  )
+                }
+              >
                 <MessageCircle className="size-4 mr-2" /> Share to WhatsApp
               </DropdownMenuItem>
             </DropdownMenuContent>
