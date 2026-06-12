@@ -10,6 +10,7 @@ import {
   CheckCheck,
   Loader2,
   Share2,
+  Mail,
   Trash2,
   ShieldCheck,
   ArrowUp,
@@ -39,7 +40,6 @@ import { ITEMS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
 import { shareApp, GENERIC_SHARE_TEXT, FEEDBACK_MAILTO, shareToWhatsApp } from "@/lib/share";
 import { NotificationPermissionBanner } from "@/components/notification-permission-banner";
-import { Footer } from "@/components/footer";
 
 function getOwnerToken(listingId: string): string | null {
   try {
