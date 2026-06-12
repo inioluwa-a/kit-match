@@ -9,7 +9,6 @@ import {
   CheckCheck,
   Loader2,
   Share2,
-  Mail,
   Trash2,
   ShieldCheck,
 } from "lucide-react";
@@ -27,8 +26,9 @@ import {
 import { useCamp } from "@/lib/camp-store";
 import { ITEMS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
-import { shareApp, GENERIC_SHARE_TEXT, FEEDBACK_MAILTO } from "@/lib/share";
+import { shareApp, GENERIC_SHARE_TEXT } from "@/lib/share";
 import { NotificationPermissionBanner } from "@/components/notification-permission-banner";
+import { Footer } from "@/components/footer";
 
 function getOwnerToken(listingId: string): string | null {
   try {
@@ -309,20 +309,7 @@ function FindPage() {
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t flex items-center justify-center gap-5 text-xs text-muted-foreground">
-          <button
-            onClick={() => shareApp(GENERIC_SHARE_TEXT)}
-            className="inline-flex items-center gap-1.5 hover:text-foreground"
-          >
-            <Share2 className="size-3.5" /> Share KitMatch
-          </button>
-          <a
-            href={FEEDBACK_MAILTO}
-            className="inline-flex items-center gap-1.5 hover:text-foreground"
-          >
-            <Mail className="size-3.5" /> Feedback
-          </a>
-        </div>
+        <Footer />
       </div>
     </main>
   );
