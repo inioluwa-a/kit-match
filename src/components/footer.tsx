@@ -19,7 +19,7 @@ export function Footer() {
           <Mail className="size-3.5" /> Feedback
         </a>
         <a
-          href="https://github.com/inioluwa-a/kitmatch"
+          href="https://github.com/inioluwa-a/kit-match"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
