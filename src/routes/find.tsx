@@ -27,7 +27,7 @@ import {
 import { useCamp } from "@/lib/camp-store";
 import { ITEMS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
-import { shareApp, GENERIC_SHARE_TEXT, SUPPORT_MAILTO } from "@/lib/share";
+import { shareApp, GENERIC_SHARE_TEXT, FEEDBACK_MAILTO } from "@/lib/share";
 import { NotificationPermissionBanner } from "@/components/notification-permission-banner";
 
 function getOwnerToken(listingId: string): string | null {
@@ -317,10 +317,10 @@ function FindPage() {
             <Share2 className="size-3.5" /> Share KitMatch
           </button>
           <a
-            href={SUPPORT_MAILTO}
+            href={FEEDBACK_MAILTO}
             className="inline-flex items-center gap-1.5 hover:text-foreground"
           >
-            <Mail className="size-3.5" /> Support
+            <Mail className="size-3.5" /> Feedback
           </a>
         </div>
       </div>

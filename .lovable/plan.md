@@ -1,4 +1,4 @@
-# KitMatch: Share & Support
+# KitMatch: Share & Feedback
 
 ## 1. Share the App
 
@@ -22,7 +22,7 @@ Swap your NYSC kit on KitMatch — find corps members in your camp who have the 
 
 **Implementation:** Use `navigator.share()` on mobile, fallback to `navigator.clipboard.writeText()` + toast confirmation on desktop.
 
-## 2. Support Contact
+## 2. Feedback Contact
 
 Add a minimal **"Need help?"** link at the bottom of the landing page (`/`) that opens:
 
@@ -30,7 +30,7 @@ Add a minimal **"Need help?"** link at the bottom of the landing page (`/`) that
 mailto:icharlesapara@gmail.com?subject=KitMatch%20Support
 ```
 
-Also add a compact support link in the footer area of the `/find` and `/post` pages (e.g., a small "Support" text link at the very bottom, outside the main card area).
+Also add a compact feedback link in the footer area of the `/find` and `/post` pages (e.g., a small "Feedback" text link at the very bottom, outside the main card area).
 
 ---
 

@@ -1,8 +1,8 @@
 import { toast } from "sonner";
 
-const SUPPORT_EMAIL = "icharlesapara@gmail.com";
+const FEEDBACK_EMAIL = "icharlesapara@gmail.com";
 
-export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("KitMatch Support")}`;
+export const FEEDBACK_MAILTO = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent("KitMatch Support")}`;
 
 export function getShareUrl(): string {
   if (typeof window === "undefined") return "https://kitmatch.app";

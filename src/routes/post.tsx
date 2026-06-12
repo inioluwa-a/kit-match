@@ -26,7 +26,7 @@ import {
 import { useCamp } from "@/lib/camp-store";
 import { ITEMS, PLATOONS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
-import { shareApp, buildCampShareText, SUPPORT_MAILTO } from "@/lib/share";
+import { shareApp, buildCampShareText, FEEDBACK_MAILTO } from "@/lib/share";
 
 type SwapRow = {
   id: string;
@@ -277,8 +277,8 @@ function PostPage() {
           </div>
           <p className="mt-8 text-xs text-muted-foreground">
             Need help?{" "}
-            <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
-              Contact support
+            <a href={FEEDBACK_MAILTO} className="text-primary hover:underline font-medium">
+              Send feedback
             </a>
           </p>
         </div>
@@ -402,10 +402,10 @@ function PostPage() {
         </p>
         <div className="pt-4 flex items-center justify-center gap-5 text-xs text-muted-foreground">
           <a
-            href={SUPPORT_MAILTO}
+            href={FEEDBACK_MAILTO}
             className="inline-flex items-center gap-1.5 hover:text-foreground"
           >
-            <Mail className="size-3.5" /> Support
+            <Mail className="size-3.5" /> Feedback
           </a>
         </div>
       </form>

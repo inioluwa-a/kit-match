@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { CAMPS } from "@/lib/kit-data";
 import { useCamp, setCamp as persistCamp } from "@/lib/camp-store";
-import { shareApp, GENERIC_SHARE_TEXT, SUPPORT_MAILTO } from "@/lib/share";
+import { shareApp, GENERIC_SHARE_TEXT, FEEDBACK_MAILTO } from "@/lib/share";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -82,8 +82,8 @@ function Index() {
           </div>
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Need help?{" "}
-            <a href={SUPPORT_MAILTO} className="text-primary hover:underline font-medium">
-              Contact support
+            <a href={FEEDBACK_MAILTO} className="text-primary hover:underline font-medium">
+              Send feedback
             </a>
           </p>
         </div>
@@ -178,10 +178,10 @@ function Index() {
             <Share2 className="size-3.5" /> Share KitMatch
           </button>
           <a
-            href={SUPPORT_MAILTO}
+            href={FEEDBACK_MAILTO}
             className="inline-flex items-center gap-1.5 hover:text-foreground"
           >
-            <Mail className="size-3.5" /> Support
+            <Mail className="size-3.5" /> Feedback
           </a>
         </div>
       </div>
