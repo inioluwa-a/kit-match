@@ -4,13 +4,16 @@ const FEEDBACK_EMAIL = "icharlesapara@gmail.com";
 
 export const FEEDBACK_MAILTO = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent("KitMatch Support")}`;
 
-export function getShareUrl(): string {
+export function getShareUrl(camp?: string | null): string {
   if (typeof window === "undefined") return "https://kitmatch.app";
-  return window.location.origin;
+  const url = new URL(window.location.origin);
+  url.pathname = "/find";
+  if (camp) url.searchParams.set("camp", camp);
+  return url.toString();
 }
 
-export async function shareApp(text: string, title = "KitMatch") {
-  const url = getShareUrl();
+export async function shareApp(text: string, title = "KitMatch", camp?: string | null) {
+  const url = getShareUrl(camp);
   const shareData = { title, text, url };
 
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
@@ -33,6 +36,12 @@ export async function shareApp(text: string, title = "KitMatch") {
 
 export function buildCampShareText(camp: string) {
   return `I just posted a kit swap on KitMatch for ${camp}. Join us and swap your NYSC kit too!`;
+}
+
+export function shareToWhatsApp(text: string, camp?: string | null) {
+  const url = getShareUrl(camp);
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`;
+  window.open(waUrl, "_blank");
 }
 
 export const GENERIC_SHARE_TEXT =
