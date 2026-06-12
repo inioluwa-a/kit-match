@@ -44,6 +44,7 @@ export function NotificationPermissionBanner() {
   };
 
   if (
+    typeof window === "undefined" ||
     permission === "loading" ||
     permission === "granted" ||
     dismissed ||

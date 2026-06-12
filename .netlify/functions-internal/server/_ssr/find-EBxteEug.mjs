@@ -5,7 +5,7 @@ import { n as useCamp } from "./camp-store-Cv1vmAWP.mjs";
 import { d as useNavigate, u as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { f as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
 import { n as objectType, r as stringType, t as booleanType } from "../_libs/zod.mjs";
-import { t as Route } from "./find-uJyPoc2z.mjs";
+import { t as Route } from "./find-C0V-akf8.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
 import { C as Bell, T as ArrowLeft, a as Share2, b as Check, c as MessageCircle, d as LoaderCircle, f as Inbox, i as ShieldCheck, m as Circle, n as Trash2, o as Send, p as Image, r as Sparkles, t as X, u as Mail, v as ChevronRight, w as ArrowUp, x as CheckCheck } from "../_libs/lucide-react.mjs";
 import { a as Label2, c as Root2, d as SubTrigger2, f as Trigger, i as ItemIndicator2, l as Separator2, n as Content2, o as Portal2, r as Item2, s as RadioItem2, t as CheckboxItem2, u as SubContent2 } from "../_libs/@radix-ui/react-dropdown-menu+[...].mjs";
@@ -14,7 +14,7 @@ import { t as Label } from "./label-DT3uv-9Y.mjs";
 import { i as useQueryClient, n as useMutation, t as useInfiniteQuery } from "../_libs/tanstack__react-query.mjs";
 import { t as toPng } from "../_libs/html-to-image.mjs";
 import { n as Thumb, t as Root } from "../_libs/radix-ui__react-switch.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/find-D8LfAXCC.js
+//#region node_modules/.nitro/vite/services/ssr/assets/find-EBxteEug.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var Switch = import_react.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Root, {
@@ -122,7 +122,7 @@ function NotificationPermissionBanner() {
 		setDismissed(true);
 		localStorage.setItem(DISMISSED_KEY, "true");
 	};
-	if (permission === "loading" || permission === "granted" || dismissed || !("Notification" in window)) return null;
+	if (typeof window === "undefined" || permission === "loading" || permission === "granted" || dismissed || !("Notification" in window)) return null;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "rounded-2xl border bg-primary/5 border-primary/20 p-4 flex items-center gap-4 relative group",
 		children: [
