@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import {
   ArrowLeft,
   MessageCircle,
@@ -12,8 +13,12 @@ import {
   Mail,
   Trash2,
   ShieldCheck,
+  ArrowUp,
+  Image as ImageIcon,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
+import { toPng } from "html-to-image";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -24,10 +29,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useCamp } from "@/lib/camp-store";
 import { ITEMS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
-import { shareApp, GENERIC_SHARE_TEXT, FEEDBACK_MAILTO } from "@/lib/share";
+import { shareApp, GENERIC_SHARE_TEXT, FEEDBACK_MAILTO, shareToWhatsApp } from "@/lib/share";
 import { NotificationPermissionBanner } from "@/components/notification-permission-banner";
 
 function getOwnerToken(listingId: string): string | null {
@@ -53,7 +64,17 @@ function clearOwnerToken(listingId: string) {
   }
 }
 
+const findSearchSchema = z.object({
+  item: z.string().optional().catch("all"),
+  size: z.string().optional().catch("all"),
+  perfect: z.boolean().optional().catch(false),
+  camp: z.string().optional(),
+});
+
+type FindSearch = z.infer<typeof findSearchSchema>;
+
 export const Route = createFileRoute("/find")({
+  validateSearch: (search) => findSearchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Find Matches — KitMatch" },
@@ -77,33 +98,61 @@ type SwapRow = {
 };
 
 function FindPage() {
-  const { camp, ready } = useCamp();
+  const { camp: storedCamp, ready, setCamp } = useCamp();
   const navigate = useNavigate();
+  const { item: itemFilter, size: sizeFilter, perfect: perfectOnly, camp: urlCamp } = Route.useSearch();
   const qc = useQueryClient();
-  const [itemFilter, setItemFilter] = useState<string>("all");
-  const [sizeFilter, setSizeFilter] = useState<string>("all");
-  const [perfectOnly, setPerfectOnly] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    if (ready && !camp) navigate({ to: "/" });
-  }, [ready, camp, navigate]);
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const camp = urlCamp || storedCamp;
+
+  useEffect(() => {
+    if (ready && !camp) {
+      navigate({ to: "/" });
+    } else if (ready && urlCamp && urlCamp !== storedCamp) {
+      setCamp(urlCamp);
+    }
+  }, [ready, camp, urlCamp, storedCamp, navigate, setCamp]);
 
   const PAGE_SIZE = 10;
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
-    queryKey: ["swap_requests", camp],
+    queryKey: ["swap_requests", camp, itemFilter, sizeFilter],
     enabled: !!camp,
     initialPageParam: 0,
     queryFn: async ({ pageParam = 0 }): Promise<SwapRow[]> => {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
-      const { data, error } = await supabase
+
+      let query = supabase
         .from("swap_requests")
-        .select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at")
+        .select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at", { count: "exact" })
         .eq("camp", camp!)
-        .eq("status", "available")
+        .eq("status", "available");
+
+      if (itemFilter && itemFilter !== "all") {
+        query = query.eq("item", itemFilter);
+      }
+
+      if (sizeFilter && sizeFilter !== "all") {
+        query = query.eq("need_size", sizeFilter);
+      }
+
+      const { data, error, count } = await query
         .order("created_at", { ascending: false })
         .range(from, to);
+
       if (error) throw error;
+      if (pageParam === 0 && count !== null) setTotalCount(count);
       return data as SwapRow[];
     },
     getNextPageParam: (lastPage, allPages) => {
@@ -133,23 +182,19 @@ function FindPage() {
   });
 
   const sizeOptions = useMemo(() => {
-    if (itemFilter === "all") return [];
+    if (!itemFilter || itemFilter === "all") return [];
     return SIZES_BY_ITEM[itemFilter as Item] ?? [];
   }, [itemFilter]);
 
-  useEffect(() => {
-    setSizeFilter("all");
-  }, [itemFilter]);
+  const updateFilters = (newFilters: Partial<FindSearch>) => {
+    navigate({
+      search: (prev) => ({ ...prev, ...newFilters }),
+    });
+  };
 
   const { perfect, others } = useMemo(() => {
     const myListingIds = listings.filter((l) => !!getOwnerToken(l.id)).map((l) => l.id);
     const myActiveListings = listings.filter((l) => myListingIds.includes(l.id));
-
-    const filtered = listings.filter((l) => {
-      if (itemFilter !== "all" && l.item !== itemFilter) return false;
-      if (sizeFilter !== "all" && l.need_size !== sizeFilter) return false;
-      return true;
-    });
 
     const isPerfect = (l: SwapRow) => {
       if (myActiveListings.length === 0) return false;
@@ -175,9 +220,9 @@ function FindPage() {
 
     const perfect: SwapRow[] = [];
     const others: SwapRow[] = [];
-    for (const l of filtered) (isPerfect(l) ? perfect : others).push(l);
+    for (const l of listings) (isPerfect(l) ? perfect : others).push(l);
     return { perfect, others: perfectOnly ? [] : others };
-  }, [listings, itemFilter, sizeFilter, perfectOnly]);
+  }, [listings, perfectOnly]);
 
   if (!ready || !camp) return null;
 
@@ -192,24 +237,60 @@ function FindPage() {
             <h1 className="font-semibold leading-tight">Find Matches</h1>
             <p className="text-xs text-muted-foreground truncate">{camp}</p>
           </div>
-          <button
-            onClick={() => shareApp(GENERIC_SHARE_TEXT)}
-            className="size-9 rounded-lg border grid place-items-center hover:bg-accent"
-            aria-label="Share KitMatch"
-          >
-            <Share2 className="size-4" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="size-9 rounded-lg border grid place-items-center hover:bg-accent"
+                aria-label="Share KitMatch"
+              >
+                <Share2 className="size-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 rounded-xl">
+              <DropdownMenuItem onClick={() => shareApp(GENERIC_SHARE_TEXT, "KitMatch", camp)}>
+                <Send className="size-4 mr-2" /> Share Link
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => shareToWhatsApp(GENERIC_SHARE_TEXT, camp)}>
+                <MessageCircle className="size-4 mr-2" /> Share to WhatsApp
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
       <div className="max-w-md mx-auto px-5 py-5 space-y-4">
         <NotificationPermissionBanner />
 
-        <div className="rounded-2xl border bg-card p-4 space-y-3">
+        <div className="rounded-2xl border bg-card p-4 space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={itemFilter === "all" ? "default" : "outline"}
+              size="sm"
+              className="rounded-full h-8 px-4 text-xs"
+              onClick={() => updateFilters({ item: "all", size: "all" })}
+            >
+              All
+            </Button>
+            {ITEMS.map((item) => (
+              <Button
+                key={item}
+                variant={itemFilter === item ? "default" : "outline"}
+                size="sm"
+                className="rounded-full h-8 px-4 text-xs"
+                onClick={() => updateFilters({ item, size: "all" })}
+              >
+                {item}
+              </Button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label className="text-xs">Item</Label>
-              <Select value={itemFilter} onValueChange={setItemFilter}>
+              <Select
+                value={itemFilter || "all"}
+                onValueChange={(val) => updateFilters({ item: val, size: "all" })}
+              >
                 <SelectTrigger className="h-11 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
@@ -226,9 +307,9 @@ function FindPage() {
             <div className="grid gap-1.5">
               <Label className="text-xs">Size needed</Label>
               <Select
-                value={sizeFilter}
-                onValueChange={setSizeFilter}
-                disabled={itemFilter === "all"}
+                value={sizeFilter || "all"}
+                onValueChange={(val) => updateFilters({ size: val })}
+                disabled={!itemFilter || itemFilter === "all"}
               >
                 <SelectTrigger className="h-11 rounded-xl">
                   <SelectValue placeholder="Any" />
@@ -244,12 +325,34 @@ function FindPage() {
               </Select>
             </div>
           </div>
-          <div className="flex items-center justify-between pt-1">
-            <Label htmlFor="perfect" className="text-sm">
+
+          <div className="flex items-center justify-between pt-1 border-t pt-4">
+            <Label htmlFor="perfect" className="text-sm font-medium">
               Show perfect matches only
             </Label>
-            <Switch id="perfect" checked={perfectOnly} onCheckedChange={setPerfectOnly} />
+            <Switch
+              id="perfect"
+              checked={!!perfectOnly}
+              onCheckedChange={(val) => updateFilters({ perfect: val })}
+            />
           </div>
+
+          {(itemFilter !== "all" || sizeFilter !== "all" || perfectOnly) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-muted-foreground h-8"
+              onClick={() => updateFilters({ item: "all", size: "all", perfect: false })}
+            >
+              Clear all filters
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-sm font-medium text-muted-foreground">
+            {isLoading ? "Searching..." : `${totalCount ?? 0} listings found`}
+          </h2>
         </div>
 
         {isLoading ? (
@@ -311,7 +414,7 @@ function FindPage() {
 
         <div className="mt-8 pt-6 border-t flex items-center justify-center gap-5 text-xs text-muted-foreground">
           <button
-            onClick={() => shareApp(GENERIC_SHARE_TEXT)}
+            onClick={() => shareApp(GENERIC_SHARE_TEXT, "KitMatch", camp)}
             className="inline-flex items-center gap-1.5 hover:text-foreground"
           >
             <Share2 className="size-3.5" /> Share KitMatch
@@ -324,6 +427,16 @@ function FindPage() {
           </a>
         </div>
       </div>
+
+      {showScrollTop && (
+        <Button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 right-6 size-12 rounded-full shadow-lg z-20"
+          size="icon"
+        >
+          <ArrowUp className="size-5" />
+        </Button>
+      )}
     </main>
   );
 }
@@ -341,12 +454,52 @@ function ListingCard({
   onSwapped: (status?: string) => void;
   swapping: boolean;
 }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isSharing, setIsSharing] = useState(false);
+
   const waUrl = `https://wa.me/${listing.whatsapp}?text=${encodeURIComponent(
     `Hi ${listing.name}, I saw your KitMatch post for ${listing.item} (you have size ${listing.have_size}, need ${listing.need_size}). Let's swap.`,
   )}`;
+
+  const handleShareAsImage = async () => {
+    if (!cardRef.current) return;
+    setIsSharing(true);
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        backgroundColor: "white",
+        style: {
+          transform: "scale(1)",
+        },
+      });
+
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], `kitmatch-${listing.item.replace(/\s+/g, "-").toLowerCase()}.png`, { type: "image/png" });
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "KitMatch Swap",
+          text: `Check out this kit swap for ${listing.item} at ${listing.camp}!`,
+        });
+      } else {
+        const link = document.createElement("a");
+        link.download = `kitmatch-${listing.item.toLowerCase()}.png`;
+        link.href = dataUrl;
+        link.click();
+        toast.success("Image saved to your device");
+      }
+    } catch (err) {
+      console.error("Failed to share image", err);
+      toast.error("Couldn't generate image. Try again.");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <article
-      className={`rounded-2xl border bg-card p-4 shadow-sm ${
+      ref={cardRef}
+      className={`rounded-2xl border bg-card p-4 shadow-sm relative overflow-hidden ${
         perfect ? "ring-2 ring-primary/40" : ""
       }`}
     >
@@ -357,48 +510,74 @@ function ListingCard({
           </div>
           <p className="text-xs text-muted-foreground">Platoon {listing.platoon}</p>
         </div>
-        {perfect && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground px-2.5 py-1 text-xs font-medium">
-            <Sparkles className="size-3" /> Perfect Match
+        <div className="flex flex-col items-end gap-2">
+          {perfect && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground px-2.5 py-1 text-xs font-medium">
+              <Sparkles className="size-3" /> Perfect Match
+            </span>
+          )}
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-secondary text-secondary-foreground">
+            {listing.camp.split(" (")[0]}
           </span>
-        )}
+        </div>
       </div>
       <div className="mt-3 text-sm">
-        <div className="font-medium">{listing.item}</div>
+        <div className="font-medium text-lg">{listing.item}</div>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <Tag label="Has" value={`Size ${listing.have_size}`} tone="success" />
           <Tag label="Needs" value={`Size ${listing.need_size}`} />
         </div>
       </div>
       <div className="mt-4 space-y-2">
-        <div className={`grid gap-2 ${isOwner ? "grid-cols-[1fr_auto]" : "grid-cols-1"}`}>
+        <div className={`grid gap-2 ${isOwner ? "grid-cols-[1fr_auto]" : "grid-cols-[1fr_auto]"}`}>
           <Button asChild className="h-11 rounded-xl">
             <a href={waUrl} target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="size-4" /> Chat on WhatsApp
+              <MessageCircle className="size-4" /> Chat
             </a>
           </Button>
-          {isOwner && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-11 rounded-xl">
+                <Share2 className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 rounded-xl">
+              <DropdownMenuItem onClick={handleShareAsImage} disabled={isSharing}>
+                {isSharing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <ImageIcon className="size-4 mr-2" />}
+                Share as Image
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => shareToWhatsApp(`Hi, check out this ${listing.item} swap on KitMatch!`, listing.camp)}>
+                <MessageCircle className="size-4 mr-2" /> Share to WhatsApp
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {isOwner && (
+          <div className="grid grid-cols-2 gap-2">
             <Button
               variant="secondary"
-              className="h-11 rounded-xl border"
+              className="h-10 rounded-xl border gap-2"
               onClick={() => onSwapped("swapped")}
               disabled={swapping}
-              title="Mark as swapped"
             >
-              <CheckCheck className="size-4" />
+              <CheckCheck className="size-4" /> Swapped
             </Button>
-          )}
-        </div>
-        {isOwner && (
-          <Button
-            variant="ghost"
-            className="w-full h-10 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
-            onClick={() => onSwapped("removed")}
-            disabled={swapping}
-          >
-            <Trash2 className="size-4" /> Remove Listing
-          </Button>
+            <Button
+              variant="ghost"
+              className="h-10 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+              onClick={() => onSwapped("removed")}
+              disabled={swapping}
+            >
+              <Trash2 className="size-4" /> Remove
+            </Button>
+          </div>
         )}
+      </div>
+
+      <div className="mt-4 pt-3 border-t flex items-center justify-between opacity-40 grayscale pointer-events-none">
+        <span className="text-[10px] font-bold tracking-tighter uppercase">KitMatch</span>
+        <span className="text-[8px]">kitmatch.app</span>
       </div>
     </article>
   );
