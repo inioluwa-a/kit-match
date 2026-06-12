@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   Loader2,
   Share2,
-  Mail,
   Sparkles,
   MessageCircle,
   Trash2,
@@ -26,7 +25,8 @@ import {
 import { useCamp } from "@/lib/camp-store";
 import { ITEMS, PLATOONS, SIZES_BY_ITEM, type Item } from "@/lib/kit-data";
 import { supabase } from "@/integrations/supabase/client";
-import { shareApp, buildCampShareText, FEEDBACK_MAILTO } from "@/lib/share";
+import { shareApp, buildCampShareText } from "@/lib/share";
+import { Footer } from "@/components/footer";
 
 type SwapRow = {
   id: string;
@@ -275,12 +275,7 @@ function PostPage() {
               <Trash2 className="size-4" /> Remove My Listing
             </Button>
           </div>
-          <p className="mt-8 text-xs text-muted-foreground">
-            Need help?{" "}
-            <a href={FEEDBACK_MAILTO} className="text-primary hover:underline font-medium">
-              Send feedback
-            </a>
-          </p>
+          <Footer />
         </div>
       </main>
     );
@@ -400,14 +395,7 @@ function PostPage() {
         <p className="text-xs text-muted-foreground text-center">
           Listings expire automatically after 14 days.
         </p>
-        <div className="pt-4 flex items-center justify-center gap-5 text-xs text-muted-foreground">
-          <a
-            href={FEEDBACK_MAILTO}
-            className="inline-flex items-center gap-1.5 hover:text-foreground"
-          >
-            <Mail className="size-3.5" /> Feedback
-          </a>
-        </div>
+        <Footer />
       </form>
     </main>
   );

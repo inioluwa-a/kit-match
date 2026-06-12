@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Boxes, MapPin, Search, PlusCircle, Check, Share2, Mail } from "lucide-react";
+import { Boxes, MapPin, Search, PlusCircle, Check, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/select";
 import { CAMPS } from "@/lib/kit-data";
 import { useCamp, setCamp as persistCamp } from "@/lib/camp-store";
-import { shareApp, GENERIC_SHARE_TEXT, FEEDBACK_MAILTO } from "@/lib/share";
+import { shareApp, GENERIC_SHARE_TEXT } from "@/lib/share";
+import { Footer } from "@/components/footer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -80,12 +81,7 @@ function Index() {
               You'll only see listings from your camp. No accounts needed.
             </p>
           </div>
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            Need help?{" "}
-            <a href={FEEDBACK_MAILTO} className="text-primary hover:underline font-medium">
-              Send feedback
-            </a>
-          </p>
+          <Footer />
         </div>
       </main>
     );
@@ -170,20 +166,7 @@ function Index() {
           </li>
         </ol>
 
-        <div className="mt-10 pt-6 border-t flex items-center justify-center gap-5 text-xs text-muted-foreground">
-          <button
-            onClick={() => shareApp(GENERIC_SHARE_TEXT)}
-            className="inline-flex items-center gap-1.5 hover:text-foreground"
-          >
-            <Share2 className="size-3.5" /> Share KitMatch
-          </button>
-          <a
-            href={FEEDBACK_MAILTO}
-            className="inline-flex items-center gap-1.5 hover:text-foreground"
-          >
-            <Mail className="size-3.5" /> Feedback
-          </a>
-        </div>
+        <Footer />
       </div>
     </main>
   );
