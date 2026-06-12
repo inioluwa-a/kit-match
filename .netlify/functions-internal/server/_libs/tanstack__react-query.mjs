@@ -1,7 +1,7 @@
 import { r as __toESM } from "../_runtime.mjs";
 import { u as require_react } from "./@floating-ui/react-dom+[...].mjs";
 import { f as require_jsx_runtime } from "./@radix-ui/react-arrow+[...].mjs";
-import { a as environmentManager, i as notifyManager, n as MutationObserver, o as noop, r as InfiniteQueryObserver, s as shouldThrowError } from "./tanstack__query-core.mjs";
+import { a as notifyManager, c as shouldThrowError, i as QueryObserver, n as MutationObserver, o as environmentManager, r as InfiniteQueryObserver, s as noop } from "./tanstack__query-core.mjs";
 //#region node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();
@@ -119,6 +119,11 @@ function useBaseQuery(options, Observer, queryClient) {
 	return !defaultedOptions.notifyOnChangeProps ? observer.trackResult(result) : result;
 }
 //#endregion
+//#region node_modules/@tanstack/react-query/build/modern/useQuery.js
+function useQuery(options, queryClient) {
+	return useBaseQuery(options, QueryObserver, queryClient);
+}
+//#endregion
 //#region node_modules/@tanstack/react-query/build/modern/useMutation.js
 function useMutation(options, queryClient) {
 	const client = useQueryClient(queryClient);
@@ -143,4 +148,4 @@ function useInfiniteQuery(options, queryClient) {
 	return useBaseQuery(options, InfiniteQueryObserver, queryClient);
 }
 //#endregion
-export { useQueryClient as i, useMutation as n, QueryClientProvider as r, useInfiniteQuery as t };
+export { useQueryClient as a, QueryClientProvider as i, useMutation as n, useQuery as r, useInfiniteQuery as t };

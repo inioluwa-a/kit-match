@@ -5,16 +5,16 @@ import { n as useCamp } from "./camp-store-Cv1vmAWP.mjs";
 import { d as useNavigate, u as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { f as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
 import { n as objectType, r as stringType, t as booleanType } from "../_libs/zod.mjs";
-import { t as Route } from "./find-D9hhCnN2.mjs";
+import { t as Route } from "./find-D6wEWMgP.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
 import { C as CheckCheck, D as ArrowLeft, E as ArrowUp, S as Check, T as Bell, a as ShieldCheck, b as ChevronRight, f as LoaderCircle, g as Circle, i as Sparkles, l as MessageCircle, m as Image, n as Trash2, o as Share2, p as Inbox, s as Send, t as X } from "../_libs/lucide-react.mjs";
 import { a as Label2, c as Root2, d as SubTrigger2, f as Trigger, i as ItemIndicator2, l as Separator2, n as Content2, o as Portal2, r as Item2, s as RadioItem2, t as CheckboxItem2, u as SubContent2 } from "../_libs/@radix-ui/react-dropdown-menu+[...].mjs";
 import { a as ITEMS, c as Select, d as SelectTrigger, f as SelectValue, g as shareToWhatsApp, h as shareApp, i as GENERIC_SHARE_TEXT, l as SelectContent, m as cn, r as Footer, s as SIZES_BY_ITEM, t as Button, u as SelectItem } from "./footer-CzaR6acm.mjs";
 import { t as Label } from "./label-DYmjuDOL.mjs";
-import { i as useQueryClient, n as useMutation, t as useInfiniteQuery } from "../_libs/tanstack__react-query.mjs";
+import { a as useQueryClient, n as useMutation, r as useQuery, t as useInfiniteQuery } from "../_libs/tanstack__react-query.mjs";
 import { t as toPng } from "../_libs/html-to-image.mjs";
 import { n as Thumb, t as Root } from "../_libs/radix-ui__react-switch.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/find-9C_N14qs.js
+//#region node_modules/.nitro/vite/services/ssr/assets/find-BgBMpOrj.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var Switch = import_react.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Root, {
@@ -206,7 +206,7 @@ function FindPage() {
 	]);
 	const PAGE_SIZE = 10;
 	const [totalCount, setTotalCount] = (0, import_react.useState)(null);
-	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
+	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error: queryError } = useInfiniteQuery({
 		queryKey: [
 			"swap_requests",
 			camp,
@@ -220,9 +220,12 @@ function FindPage() {
 			const to = from + PAGE_SIZE - 1;
 			let query = supabase.from("swap_requests").select("id, camp, name, platoon, whatsapp, item, have_size, need_size, status, created_at", { count: "exact" }).eq("camp", camp).eq("status", "available");
 			if (itemFilter && itemFilter !== "all") query = query.eq("item", itemFilter);
-			if (sizeFilter && sizeFilter !== "all") query = query.eq("need_size", sizeFilter);
+			if (sizeFilter && sizeFilter !== "all") query = query.eq("have_size", sizeFilter);
 			const { data, error, count } = await query.order("created_at", { ascending: false }).range(from, to);
-			if (error) throw error;
+			if (error) {
+				console.error("Supabase error:", error);
+				throw error;
+			}
 			if (pageParam === 0 && count !== null) setTotalCount(count);
 			return data;
 		},
@@ -239,7 +242,10 @@ function FindPage() {
 				p_id: id,
 				p_token: token
 			});
-			if (error) throw error;
+			if (error) {
+				console.error("Supabase error:", error);
+				throw error;
+			}
 			if (!data) throw new Error("Could not update listing.");
 			clearOwnerToken(id);
 		},
@@ -259,13 +265,26 @@ function FindPage() {
 			...newFilters
 		}) });
 	};
+	const { data: userListings = [] } = useQuery({
+		queryKey: ["user_listings", camp],
+		enabled: !!camp,
+		queryFn: async () => {
+			const raw = localStorage.getItem("kitmatch:owner_tokens");
+			if (!raw) return [];
+			const map = JSON.parse(raw);
+			const ids = Object.keys(map);
+			if (ids.length === 0) return [];
+			const { data, error } = await supabase.from("swap_requests").select("id, item, have_size, need_size").in("id", ids).eq("status", "available");
+			if (error) throw error;
+			return data;
+		}
+	});
 	const { perfect, others } = (0, import_react.useMemo)(() => {
-		const myListingIds = listings.filter((l) => !!getOwnerToken(l.id)).map((l) => l.id);
-		const myActiveListings = listings.filter((l) => myListingIds.includes(l.id));
+		listings.filter((l) => !!getOwnerToken(l.id)).map((l) => l.id);
 		const isPerfect = (l) => {
-			if (myActiveListings.length === 0) return false;
-			if (!!getOwnerToken(l.id)) return listings.some((o) => !getOwnerToken(o.id) && o.item === l.item && o.have_size === l.need_size && o.need_size === l.have_size);
-			else return myActiveListings.some((my) => l.item === my.item && l.have_size === my.need_size && l.need_size === my.have_size);
+			if (userListings.length === 0) return false;
+			if (userListings.some((my) => my.id === l.id)) return listings.some((o) => !userListings.some((my) => my.id === o.id) && o.item === l.item && o.have_size === l.need_size && o.need_size === l.have_size);
+			else return userListings.some((my) => l.item === my.item && l.have_size === my.need_size && l.need_size === my.have_size);
 		};
 		const perfect = [];
 		const others = [];
@@ -405,10 +424,36 @@ function FindPage() {
 							children: isLoading ? "Searching..." : `${totalCount ?? 0} listings found`
 						})
 					}),
-					isLoading ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					isError ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "py-16 text-center text-destructive",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "font-semibold",
+								children: "Failed to load listings"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-sm opacity-70",
+								children: queryError?.message || "Unknown error"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								variant: "outline",
+								className: "mt-4 h-10 rounded-xl",
+								onClick: () => refetch(),
+								children: isRefetching ? "Refreshing..." : "Try Again"
+							})
+						]
+					}) : isLoading ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 						className: "py-16 grid place-items-center text-muted-foreground",
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LoaderCircle, { className: "size-6 animate-spin" })
-					}) : perfect.length + others.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EmptyState, {}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					}) : perfect.length + others.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EmptyState, {
+						perfectOnly: !!perfectOnly,
+						hasFilters: itemFilter !== "all" || sizeFilter !== "all",
+						onClearFilters: () => updateFilters({
+							item: "all",
+							size: "all",
+							perfect: false
+						})
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "space-y-3",
 						children: [
 							perfect.map((l) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListingCard, {
@@ -619,7 +664,7 @@ function Tag({ label, value, tone }) {
 		})]
 	});
 }
-function EmptyState() {
+function EmptyState({ perfectOnly, hasFilters, onClearFilters }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "rounded-2xl border bg-card p-8 text-center",
 		children: [
@@ -633,12 +678,17 @@ function EmptyState() {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "text-sm text-muted-foreground mt-1",
-				children: "Be the first to post a swap in your camp."
+				children: perfectOnly ? "No perfect matches found. Try showing all listings or changing your filters." : "Be the first to post a swap in your camp."
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 				asChild: true,
 				className: "mt-4 h-11 rounded-xl",
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
+				children: perfectOnly || hasFilters ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					onClick: onClearFilters,
+					variant: "secondary",
+					className: "mt-4 h-11 rounded-xl w-full",
+					children: "Clear All Filters"
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
 					to: "/post",
 					children: "Post a Swap"
 				})

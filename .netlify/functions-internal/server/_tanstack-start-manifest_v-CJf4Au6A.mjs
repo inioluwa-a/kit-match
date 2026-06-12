@@ -1,4 +1,4 @@
-//#region node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-LQ5jfmuD.js
+//#region node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-CJf4Au6A.js
 var tsrStartManifest = () => ({
 	routes: {
 		__root__: {
@@ -9,22 +9,22 @@ var tsrStartManifest = () => ({
 				"/post"
 			],
 			assets: void 0,
-			preloads: ["/assets/index-YLKOWZZp.js"]
+			preloads: ["/assets/index-DJ40yjUk.js"]
 		},
 		"/": {
 			filePath: "/app/src/routes/index.tsx",
 			children: void 0,
 			assets: void 0,
-			preloads: ["/assets/routes-Bg6i0Qxl.js", "/assets/footer-CxCQTQGA.js"]
+			preloads: ["/assets/routes-C4wTdCxo.js", "/assets/footer-Bwumbmq0.js"]
 		},
 		"/find": {
 			filePath: "/app/src/routes/find.tsx",
 			children: void 0,
 			assets: void 0,
 			preloads: [
-				"/assets/find-Cplbe3mS.js",
-				"/assets/footer-CxCQTQGA.js",
-				"/assets/label-BnyeUhhQ.js"
+				"/assets/find-Dh1TukYE.js",
+				"/assets/footer-Bwumbmq0.js",
+				"/assets/label-B29Hu7O_.js"
 			]
 		},
 		"/post": {
@@ -32,13 +32,13 @@ var tsrStartManifest = () => ({
 			children: void 0,
 			assets: void 0,
 			preloads: [
-				"/assets/post-Ddk9XMyE.js",
-				"/assets/footer-CxCQTQGA.js",
-				"/assets/label-BnyeUhhQ.js"
+				"/assets/post-aBWFrKRu.js",
+				"/assets/footer-Bwumbmq0.js",
+				"/assets/label-B29Hu7O_.js"
 			]
 		}
 	},
-	clientEntry: "/assets/index-YLKOWZZp.js"
+	clientEntry: "/assets/index-DJ40yjUk.js"
 });
 //#endregion
 export { tsrStartManifest };

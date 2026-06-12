@@ -2174,4 +2174,4 @@ var QueryClient = class {
 	}
 };
 //#endregion
-export { environmentManager as a, notifyManager as i, MutationObserver as n, noop as o, InfiniteQueryObserver as r, shouldThrowError as s, QueryClient as t };
+export { notifyManager as a, shouldThrowError as c, QueryObserver as i, MutationObserver as n, environmentManager as o, InfiniteQueryObserver as r, noop as s, QueryClient as t };

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useRef } from "react";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import {
   ArrowLeft,
@@ -130,7 +130,15 @@ function FindPage() {
   const PAGE_SIZE = 10;
   const [totalCount, setTotalCount] = useState<number | null>(null);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error: queryError,
+  } = useInfiniteQuery({
     queryKey: ["swap_requests", camp, itemFilter, sizeFilter],
     enabled: !!camp,
     initialPageParam: 0,
@@ -152,14 +160,17 @@ function FindPage() {
       }
 
       if (sizeFilter && sizeFilter !== "all") {
-        query = query.eq("need_size", sizeFilter);
+        query = query.eq("have_size", sizeFilter);
       }
 
       const { data, error, count } = await query
         .order("created_at", { ascending: false })
         .range(from, to);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
       if (pageParam === 0 && count !== null) setTotalCount(count);
       return data as SwapRow[];
     },
@@ -178,7 +189,10 @@ function FindPage() {
         p_id: id,
         p_token: token,
       });
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
       if (!data) throw new Error("Could not update listing.");
       clearOwnerToken(id);
     },
@@ -200,26 +214,48 @@ function FindPage() {
     });
   };
 
+  const { data: userListings = [] } = useQuery({
+    queryKey: ["user_listings", camp],
+    enabled: !!camp,
+    queryFn: async () => {
+      const raw = localStorage.getItem("kitmatch:owner_tokens");
+      if (!raw) return [];
+      const map = JSON.parse(raw) as Record<string, string>;
+      const ids = Object.keys(map);
+      if (ids.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from("swap_requests")
+        .select("id, item, have_size, need_size")
+        .in("id", ids)
+        .eq("status", "available");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { perfect, others } = useMemo(() => {
     const myListingIds = listings.filter((l) => !!getOwnerToken(l.id)).map((l) => l.id);
-    const myActiveListings = listings.filter((l) => myListingIds.includes(l.id));
+    const myActiveListings = []; // Handled by userListings query now
 
     const isPerfect = (l: SwapRow) => {
-      if (myActiveListings.length === 0) return false;
+      if (userListings.length === 0) return false;
 
-      const isMine = !!getOwnerToken(l.id);
+      const isMine = userListings.some((my) => my.id === l.id);
       if (isMine) {
         // My listing is "perfect" if there's at least one OTHER person's listing that matches it
+        // We still check 'listings' here because we want to know if there's a match visible in current results
         return listings.some(
           (o) =>
-            !getOwnerToken(o.id) &&
+            !userListings.some((my) => my.id === o.id) &&
             o.item === l.item &&
             o.have_size === l.need_size &&
             o.need_size === l.have_size,
         );
       } else {
         // Someone else's listing is "perfect" if it matches one of MY listings
-        return myActiveListings.some(
+        return userListings.some(
           (my) =>
             l.item === my.item && l.have_size === my.need_size && l.need_size === my.have_size,
         );
@@ -345,12 +381,30 @@ function FindPage() {
           </h2>
         </div>
 
-        {isLoading ? (
+        {isError ? (
+          <div className="py-16 text-center text-destructive">
+            <p className="font-semibold">Failed to load listings</p>
+            <p className="text-sm opacity-70">
+              {(queryError as Error)?.message || "Unknown error"}
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4 h-10 rounded-xl"
+              onClick={() => refetch()}
+            >
+              {isRefetching ? "Refreshing..." : "Try Again"}
+            </Button>
+          </div>
+        ) : isLoading ? (
           <div className="py-16 grid place-items-center text-muted-foreground">
             <Loader2 className="size-6 animate-spin" />
           </div>
         ) : perfect.length + others.length === 0 ? (
-          <EmptyState />
+          <EmptyState
+            perfectOnly={!!perfectOnly}
+            hasFilters={itemFilter !== "all" || sizeFilter !== "all"}
+            onClearFilters={() => updateFilters({ item: "all", size: "all", perfect: false })}
+          />
         ) : (
           <div className="space-y-3">
             {perfect.map((l) => (
@@ -584,7 +638,15 @@ function Tag({ label, value, tone }: { label: string; value: string; tone?: "suc
   );
 }
 
-function EmptyState() {
+function EmptyState({
+  perfectOnly,
+  hasFilters,
+  onClearFilters,
+}: {
+  perfectOnly?: boolean;
+  hasFilters?: boolean;
+  onClearFilters?: () => void;
+}) {
   return (
     <div className="rounded-2xl border bg-card p-8 text-center">
       <div className="size-12 rounded-full bg-secondary grid place-items-center mx-auto mb-3">
@@ -592,10 +654,22 @@ function EmptyState() {
       </div>
       <h3 className="font-semibold">No listings yet</h3>
       <p className="text-sm text-muted-foreground mt-1">
-        Be the first to post a swap in your camp.
+        {perfectOnly
+          ? "No perfect matches found. Try showing all listings or changing your filters."
+          : "Be the first to post a swap in your camp."}
       </p>
       <Button asChild className="mt-4 h-11 rounded-xl">
-        <Link to="/post">Post a Swap</Link>
+        {perfectOnly || hasFilters ? (
+          <Button
+            onClick={onClearFilters}
+            variant="secondary"
+            className="mt-4 h-11 rounded-xl w-full"
+          >
+            Clear All Filters
+          </Button>
+        ) : (
+          <Link to="/post">Post a Swap</Link>
+        )}
       </Button>
     </div>
   );
