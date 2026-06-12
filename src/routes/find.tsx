@@ -262,40 +262,18 @@ function FindPage() {
         <NotificationPermissionBanner />
 
         <div className="rounded-2xl border bg-card p-4 space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant={itemFilter === "all" ? "default" : "outline"}
-              size="sm"
-              className="rounded-full h-8 px-4 text-xs"
-              onClick={() => updateFilters({ item: "all", size: "all" })}
-            >
-              All
-            </Button>
-            {ITEMS.map((item) => (
-              <Button
-                key={item}
-                variant={itemFilter === item ? "default" : "outline"}
-                size="sm"
-                className="rounded-full h-8 px-4 text-xs"
-                onClick={() => updateFilters({ item, size: "all" })}
-              >
-                {item}
-              </Button>
-            ))}
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label className="text-xs">Item</Label>
+              <Label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Which kit item?</Label>
               <Select
                 value={itemFilter || "all"}
                 onValueChange={(val) => updateFilters({ item: val, size: "all" })}
               >
-                <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue />
+                <SelectTrigger className="h-11 rounded-xl bg-muted/30">
+                  <SelectValue placeholder="Choose item" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All items</SelectItem>
+                  <SelectItem value="all">All Items</SelectItem>
                   {ITEMS.map((i) => (
                     <SelectItem key={i} value={i}>
                       {i}
@@ -305,17 +283,17 @@ function FindPage() {
               </Select>
             </div>
             <div className="grid gap-1.5">
-              <Label className="text-xs">Size needed</Label>
+              <Label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Size you need?</Label>
               <Select
                 value={sizeFilter || "all"}
                 onValueChange={(val) => updateFilters({ size: val })}
                 disabled={!itemFilter || itemFilter === "all"}
               >
-                <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue placeholder="Any" />
+                <SelectTrigger className="h-11 rounded-xl bg-muted/30">
+                  <SelectValue placeholder="Any size" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Any size</SelectItem>
+                  <SelectItem value="all">Any Size</SelectItem>
                   {sizeOptions.map((s) => (
                     <SelectItem key={s} value={s}>
                       {s}
@@ -400,16 +378,11 @@ function FindPage() {
           </div>
         )}
 
-        <div className="rounded-2xl bg-primary/5 border border-primary/10 p-4 flex gap-3">
+        <div className="rounded-2xl bg-primary/5 border border-primary/10 p-4 flex gap-3 items-center">
           <ShieldCheck className="size-5 text-primary shrink-0" />
-          <div className="space-y-1">
-            <h4 className="text-sm font-semibold text-primary">Safety First</h4>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              For your safety, only meet other corps members{" "}
-              <strong>physically inside the camp</strong>. KitMatch only facilitates connections;
-              use with caution.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <strong>Safety:</strong> Only meet other corps members <strong>inside the camp</strong>. Use with caution.
+          </p>
         </div>
 
         <div className="mt-8 pt-6 border-t flex items-center justify-center gap-5 text-xs text-muted-foreground">
